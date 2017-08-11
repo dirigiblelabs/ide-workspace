@@ -3,12 +3,11 @@
 	<head>
 		<meta charset="utf-8" />
 		<title>Eclipse Dirigible - Workspace</title>
-		<script src="services/message_hub.js"></script>
+		<script src="../ide/ui/message-hub.js"></script>
 		<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
 		<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular.min.js"></script>
 		<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular-resource.min.js"></script>
 
-		<link href="css/dark.css" rel="stylesheet">
 		<link href="css/jstree.min.css" rel="stylesheet">
 		<link href="//maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.4/jstree.min.js"></script>
@@ -17,7 +16,7 @@
 		<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 		
 	</head>
-	<body style="background-color: #333" border="1px" ng-app="workspace" ng-controller="WorkspaceController">
+	<body style="background-color: #222" border="1px" ng-app="workspace" ng-controller="WorkspaceController">
 
 		<select ng-model="selectedWs" ng-options="o as o for o in workspaces" ngChange="selected()" class="dropdown btn btn-danger dropdown-toggle pull-right"></select>
 		
@@ -45,7 +44,7 @@
 			angular.module('workspace', [])
 			.controller('WorkspaceController', function ($scope, $http) {
 								
-				var workspacesSvcUrl = "http://localhost:8080/services/v3/ide/workspaces";
+				var workspacesSvcUrl = "../../ide/workspaces";
 				$scope.selectedWs;
 				
 				
@@ -69,8 +68,7 @@
 										            "name": "default-dark",
 										            "responsive": false,
 										            "dots": false,
-        											"icons": true,
-        											"variant": "default"
+        											"icons": true
 										        },
 										      "plugins": [ "contextmenu" ],
 											  "data" : projects
