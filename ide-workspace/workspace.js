@@ -354,7 +354,7 @@ WorkspaceTreeAdapter.prototype.moveNode = function(node, sourcepath, targetpath)
 WorkspaceTreeAdapter.prototype.dblClickNode = function(node){
 	var type = node.original.type;
 	if(['folder','project'].indexOf(type)<0)
-		this.$messageHub.announceFileDeleted(node.original._file);
+		this.$messageHub.announceFileOpen(node.original._file);
 }
 WorkspaceTreeAdapter.prototype.raw = function(){
 	return this.jstree;
