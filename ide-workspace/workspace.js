@@ -500,7 +500,7 @@ angular.module('workspace', ['workspace.config'])
 				"valid_children": []
 			},
 			"project": {
-				"icon": "fa fa-folder",
+				"icon": "fa fa-folder-o",
 				"valid_children": ["folder","file","txt"]
 			}
 		},
