@@ -258,8 +258,8 @@ WorkspaceTreeAdapter.prototype.init = function(containerEl, workspaceName){
 	
 	//subscribe event listeners
 	jstree.on('select_node.jstree', function (e, data) {
-		//TODO
-	})
+		this.clickNode(this.jstree.get_node(data.node));
+	}.bind(this))
 	.on('dblclick.jstree', function (evt) {
 		this.dblClickNode(this.jstree.get_node(evt.target))
 	}.bind(this))
@@ -387,6 +387,10 @@ WorkspaceTreeAdapter.prototype.dblClickNode = function(node){
 	if(['folder','project'].indexOf(type)<0)
 		this.$messageHub.announceFileOpen(node.original._file);
 }
+WorkspaceTreeAdapter.prototype.clickNode = function(node){
+	var type = node.original.type;
+	this.$messageHub.announceFileSelected(node.original._file);
+};
 WorkspaceTreeAdapter.prototype.raw = function(){
 	return this.jstree;
 }
@@ -459,6 +463,9 @@ angular.module('workspace', ['workspace.config'])
 	var message = function(evtName, data){
 		messageHub.post({data: data}, 'workspace.' + evtName);
 	};
+	var announceFileSelected = function(fileDescriptor){
+		this.message('file.selected', fileDescriptor);
+	};
 	var announceFileCreated = function(fileDescriptor){
 		this.message('file.created', fileDescriptor);
 	};
@@ -492,6 +499,7 @@ angular.module('workspace', ['workspace.config'])
 	};
 	return {
 		message: message,
+		announceFileSelected: announceFileSelected,
 		announceFileCreated: announceFileCreated,
 		announceFileOpen: announceFileOpen,
 		announceFileDeleted: announceFileDeleted,
