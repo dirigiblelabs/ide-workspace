@@ -684,6 +684,9 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
 		this.createOpenFileMenuItem = function(ctxmenu, node){
 			var contentType = node.original._file.contentType;
 			var editors = getEditorsForContentType(contentType || "");
+			if (!editors) {
+				return;
+			}
 			if(editors.length > 1){
 				ctxmenu.openWith =  {
 					"label": "Open with...",
