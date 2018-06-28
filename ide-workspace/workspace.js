@@ -1087,6 +1087,19 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
 			generationService.generateFromModel(this.selectedWorkspace, this.projectName, this.fileName, this.selectedTemplate, this.parameters, this.wsTree);
 		}
 	};
+	this.shouldShow = function(property) {
+		var shouldShow = true;
+		if(property.ui && property.ui.hide && this.parameters) {
+			shouldShow = this.parameters[property.ui.hide.property] !== property.ui.hide.value;
+		}
+		return shouldShow;
+	};
+	this.shouldShowText = function(property) {
+		return property.type === undefined || property.type === 'text';
+	};
+	this.shouldShowCheckbox = function(property) {
+		return property.type === 'checkbox';
+	};
 	
 	this.publish = function(){
 		publishService.publish(this.selectedWorkspace + '/*');
