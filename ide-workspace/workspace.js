@@ -1090,7 +1090,13 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
 	this.shouldShow = function(property) {
 		var shouldShow = true;
 		if(property.ui && property.ui.hide && this.parameters) {
-			shouldShow = this.parameters[property.ui.hide.property] !== property.ui.hide.value;
+			if (this.parameters[property.ui.hide.property] !== undefined) {				
+				shouldShow = this.parameters[property.ui.hide.property] !== property.ui.hide.value;
+			} else {
+				shouldShow = property.ui.hide.value;
+			}
+		} else if (property.ui && property.ui.hide && this.parameters === undefined) {
+			shouldShow = property.ui.hide.value;
 		}
 		return shouldShow;
 	};
