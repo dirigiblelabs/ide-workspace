@@ -620,10 +620,19 @@ angular.module('workspace.config', [])
 	
 angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSanitize', 'ui.bootstrap'])
 .factory('httpRequestInterceptor', function () {
+	var csrfToken = null;
 	return {
 		request: function (config) {
 			config.headers['X-Requested-With'] = 'Fetch';
+			config.headers['X-CSRF-Token'] = csrfToken ? csrfToken : 'Fetch';
 			return config;
+		},
+		response: function(response) {
+			var token = response.headers()['x-csrf-token'];
+			if (token) {
+				csrfToken = token;
+			}
+			return response;
 		}
 	};
 })

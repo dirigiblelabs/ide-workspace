@@ -168,8 +168,26 @@ angular.module('workspace.config', [])
 	.constant('WS_SVC_SEARCH_URL','../../../../services/v4/ide/workspace-search');
 	
 angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSanitize', 'ui.bootstrap'])
+.factory('httpRequestInterceptor', function () {
+	var csrfToken = null;
+	return {
+		request: function (config) {
+			config.headers['X-Requested-With'] = 'Fetch';
+			config.headers['X-CSRF-Token'] = csrfToken ? csrfToken : 'Fetch';
+			return config;
+		},
+		response: function(response) {
+			var token = response.headers()['x-csrf-token'];
+			if (token) {
+				csrfToken = token;
+			}
+			return response;
+		}
+	};
+})
 .config(['$httpProvider', function($httpProvider) {
 	//check if response is error. errors currently are non-json formatted and fail too early
+	$httpProvider.interceptors.push('httpRequestInterceptor');
 	$httpProvider.defaults.transformResponse.unshift(function(data, headersGetter, status){
 		if(status>399){
 			data = {
