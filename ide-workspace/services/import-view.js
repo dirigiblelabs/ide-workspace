@@ -18,4 +18,4 @@ exports.getView = function() {
 			"link":"../ide-workspace/search.html"
 	};
 	return view;
-}
+};
