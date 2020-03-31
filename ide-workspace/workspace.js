@@ -289,25 +289,8 @@ var WorkspaceTreeAdapter = function(treeConfig, workspaceService, publishService
 			var _files = f.files.map(this._buildTreeNode.bind(this))
 			children = children.concat(_files);
 		}
-		var icon;
-		if (f.type=='project' && f.git) {
-			icon = "fa fa-git-square";
-		} else if (f.type === 'file') {
-			if (f.name.endsWith('.js')) {
-				icon = "fa fa-file-code-o";
-			} else if (f.name.endsWith('.html')) {
-				icon = "fa fa-html5";
-			} else if (f.name.endsWith('.css')) {
-				icon = "fa fa-css3";
-			} else if (f.name.endsWith('.txt') || f.name.endsWith('.json')) {
-				icon = "fa fa-file-text-o";
-			} else if (f.name.endsWith('.png') || f.name.endsWith('.jpg') || f.name.endsWith('.jpeg') || f.name.endsWith('.gif')) {
-				icon = "fa fa-file-image-o";
-			} else {
-				icon = "fa fa-file-o";
-			}
-			
-		}
+		var icon = getIcon(f);
+		
 		f.label = f.name;
 		return {
 			"text": f.name,
@@ -378,7 +361,10 @@ WorkspaceTreeAdapter.prototype.init = function(containerEl, workspaceController,
 	.on('delete_node.jstree', function (e, data) {
 		this.deleteNode(data.node);
 	}.bind(this))
-	.on('create_node.jstree', function (e, data) {})
+	.on('create_node.jstree', function (e, data) {
+		data.node.name = data.node.text;
+		data.node.icon = getIcon(data.node);
+	})
 	.on('rename_node.jstree', function (e, data) {
 		if(data.old !== data.text || !data.node.original._file){
 			this.renameNode(data.node, data.old, data.text);
@@ -444,7 +430,7 @@ WorkspaceTreeAdapter.prototype.createNode = function(parentNode, type, defaultNa
 	var node_tmpl = {
 		type: type,
 		text: this.workspaceService.newFileName(defaultName, type, filenames)
-	}
+	};
 	
 	var ctxPath = parentNode.original._file.path;
 	
@@ -454,7 +440,7 @@ WorkspaceTreeAdapter.prototype.createNode = function(parentNode, type, defaultNa
 			var name = node_tmpl.text;
 			self.jstree.edit(new_node); 
 		});
-}
+};
 WorkspaceTreeAdapter.prototype.deleteNode = function(node){
 	if(node.original && node.original._file){
 		var path = node.original._file.path;
@@ -904,7 +890,7 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
 				'icon': "fa fa-folder-o"
 			},
 			"project": {
-				"icon": "fa fa-clone"
+				"icon": "fa fa-pencil-square-o"
 			}
 		},
 		"contextmenu": {
@@ -1313,4 +1299,26 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
 
 function confirmRemove(name) {
 	return confirm("Do you really want to delete: " + name);//$confirmDialog.dialog('open');
+}
+
+function getIcon(f) {
+	var icon;
+	if (f.type === 'project' && f.git) {
+		icon = "fa fa-git-square";
+	} else if (f.type === 'file') {
+		if (f.name.endsWith('.js')) {
+			icon = "fa fa-file-code-o";
+		} else if (f.name.endsWith('.html')) {
+			icon = "fa fa-html5";
+		} else if (f.name.endsWith('.css')) {
+			icon = "fa fa-css3";
+		} else if (f.name.endsWith('.txt') || f.name.endsWith('.json')) {
+			icon = "fa fa-file-text-o";
+		} else if (f.name.endsWith('.png') || f.name.endsWith('.jpg') || f.name.endsWith('.jpeg') || f.name.endsWith('.gif')) {
+			icon = "fa fa-file-image-o";
+		} else {
+			icon = "fa fa-file-o";
+		}
+	}
+	return icon;
 }
