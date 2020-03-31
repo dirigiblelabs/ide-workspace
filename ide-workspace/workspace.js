@@ -289,11 +289,32 @@ var WorkspaceTreeAdapter = function(treeConfig, workspaceService, publishService
 			var _files = f.files.map(this._buildTreeNode.bind(this))
 			children = children.concat(_files);
 		}
+		var icon;
+		if (f.type=='project' && f.git) {
+			icon = "fa fa-git-square";
+		} else if (f.type === 'file') {
+			if (f.name.endsWith('.js')) {
+				icon = "fa fa-file-code-o";
+			} else if (f.name.endsWith('.html')) {
+				icon = "fa fa-html5";
+			} else if (f.name.endsWith('.css')) {
+				icon = "fa fa-css3";
+			} else if (f.name.endsWith('.txt') || f.name.endsWith('.json')) {
+				icon = "fa fa-file-text-o";
+			} else if (f.name.endsWith('.png') || f.name.endsWith('.jpg') || f.name.endsWith('.jpeg') || f.name.endsWith('.gif')) {
+				icon = "fa fa-file-image-o";
+			} else {
+				icon = "fa fa-file-o";
+			}
+			
+		}
 		f.label = f.name;
 		return {
 			"text": f.name,
 			"children": children,
 			"type": f.type,
+			"git": f.git,
+			"icon": icon,
 			"_file": f
 		}
 	};
@@ -338,12 +359,21 @@ WorkspaceTreeAdapter.prototype.init = function(containerEl, workspaceController,
 		this.dblClickNode(this.jstree.get_node(evt.target))
 	}.bind(this))
 	.on('open_node.jstree', function(evt, data) {
-		if (data.node.type !== 'project')
+		if (data.node.type !== 'project') {
 			data.instance.set_icon(data.node, 'fa fa-folder-open-o');
+		}
+//		else {
+//			data.instance.set_icon(data.node, 'fa fa-folder-open');
+//		}
 	})
 	.on('close_node.jstree', function(evt, data) {
-		if (data.node.type !== 'project')
+		if (data.node.type !== 'project') {
 			data.instance.set_icon(data.node, 'fa fa-folder-o');
+		}
+//		else {
+//			data.instance.set_icon(data.node, 'fa fa-folder');
+//		}
+			
 	})
 	.on('delete_node.jstree', function (e, data) {
 		this.deleteNode(data.node);
