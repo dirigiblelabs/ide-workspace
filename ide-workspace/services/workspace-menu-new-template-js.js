@@ -11,7 +11,7 @@
 exports.getTemplate = function() {
 	var view = {
 			"name":"javascript",
-			"label":"Java Script Service",
+			"label":"Javascript Service",
 			"extension":"js",
 			"data":'var response = require("http/v4/response");\n\nresponse.println("Hello World!");\nresponse.flush();\nresponse.close();'
 	};
