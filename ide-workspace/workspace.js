@@ -208,7 +208,7 @@ WorkspaceService.prototype.uploadFile = function(name, path, node){
 };
 WorkspaceService.prototype.remove = function(filepath){
 	var url = new UriBuilder().path(this.workspacesServiceUrl.split('/')).path(filepath.split('/')).build();
-	return this.$http['delete'](url);
+	return this.$http['delete'](url,{ headers: { 'Dirigible-Editor': 'Workspace' } });
 };
 WorkspaceService.prototype.rename = function(oldName, newName, path){
 	var pathSegments = path.split('/');
@@ -485,7 +485,10 @@ WorkspaceTreeAdapter.prototype.renameNode = function(node, oldName, newName){
 				//this.jstree.delete_node(node);
 				this.refresh();
 				throw err;
-			}.bind(this, node));
+			}.bind(this, node))
+			.finally(function() {
+				this.refresh();
+			}.bind(this));
 	} else {
 		this.workspaceService.rename.apply(this.workspaceService, [oldName, newName, node.original._file.path])
 			.then(function(data){
