@@ -1306,11 +1306,17 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
 	};
 	
 	this.publish = function(){
-		publishService.publish(this.selectedWorkspace + '/*');
+		publishService.publish(this.selectedWorkspace + '/*')
+			.then(function(){
+				return messageHub.announcePublish(this.selectedWorkspace + '/*');
+			}.bind(this));
 	};
 
 	this.unpublish = function(){
-		publishService.unpublish(this.selectedWorkspace + '/*');
+		publishService.unpublish(this.selectedWorkspace + '/*')
+			.then(function(){
+				return messageHub.announceUnpublish(this.selectedWorkspace + '/*');
+			}.bind(this));
 	};
 	
 	this.exportWorkspace = function(){
