@@ -52,20 +52,21 @@
 
    <body border="1px" ng-app="import" ng-controller="ImportController">
       <div class="container" nv-file-drop="" uploader="uploader" filters="queueLimit, customFilter">
+             <h3 class="well text-center">Import Project</h3>
       	 <div class="row">
 			<div class="col-lg-12">
-		    	<label class="page-header">Import to Workspace</label>
+		    	<label class="">Select Workspace:</label>
 		    	<select ng-model="selectedWs" ng-options="o as o for o in workspaces"
 					class="dropdown btn btn-default dropdown-toggle dropdown-top" title="Workspaces"></select>
 			</div>
 		 </div>
+             <hr>
          <div class="row">
             <div class="col-md-3">
-               <h3>Upload files</h3>
                <div ng-show="uploader.isHTML5">
                   <!-- 3. nv-file-over uploader="link" over-class="className" -->
                   <div class="well my-drop-zone" nv-file-over="" uploader="uploader">
-                     Drop files here
+                     Drop project *.zip file(s) here
                   </div>
                </div>
                <!-- Example: nv-file-select="" uploader="{Object}" options="{Object}" filters="{String}" -->
