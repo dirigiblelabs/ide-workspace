@@ -40,9 +40,10 @@ UriBuilder.prototype.path = function (_pathSegments) {
     this.pathSegments = this.pathSegments.concat(_pathSegments);
     return this;
 };
-UriBuilder.prototype.build = function () {
-    return this.pathSegments.join('/');
-};
+UriBuilder.prototype.build = function (isBasePath = true) {
+	if (isBasePath) return '/' + this.pathSegments.join('/');
+	return this.pathSegments.join('/');
+}
 
 /**
  * Workspace Service API delegate
@@ -691,12 +692,12 @@ TemplatesService.prototype.listTemplates = function () {
 };
 
 angular.module('workspace.config', [])
-    .constant('WS_SVC_URL', '../../../../services/v4/ide/workspaces')
-    .constant('WS_SVC_MANAGER_URL', '../../../../services/v4/ide/workspace')
-    .constant('PUBLISH_SVC_URL', '../../../../services/v4/ide/publisher/request')
-    .constant('EXPORT_SVC_URL', '../../../../services/v4/transport/project')
-    .constant('TEMPLATES_SVC_URL', '../../../../services/v4/js/ide-core/services/templates.js')
-    .constant('GENERATION_SVC_URL', '../../../../services/v4/ide/generate');
+    .constant('WS_SVC_URL', '/services/v4/ide/workspaces')
+    .constant('WS_SVC_MANAGER_URL', '/services/v4/ide/workspace')
+    .constant('PUBLISH_SVC_URL', '/services/v4/ide/publisher/request')
+    .constant('EXPORT_SVC_URL', '/services/v4/transport/project')
+    .constant('TEMPLATES_SVC_URL', '/services/v4/js/ide-core/services/templates.js')
+    .constant('GENERATION_SVC_URL', '/services/v4/ide/generate');
 
 angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSanitize', 'ui.bootstrap'])
     .factory('httpRequestInterceptor', function () {
@@ -870,7 +871,7 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
         // get the new by template extensions
         let templates = $.ajax({
             type: "GET",
-            url: '../../../../services/v4/js/ide-workspace/services/workspace-menu-new-templates.js',
+            url: '/services/v4/js/ide-workspace/services/workspace-menu-new-templates.js',
             cache: false,
             async: false
         }).responseText;
@@ -878,7 +879,7 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
         // get file extensions with available generation templates
         let fileExtensions = $.ajax({
             type: "GET",
-            url: '../../../../services/v4/js/ide-core/services/templates.js/extensions',
+            url: '/services/v4/js/ide-core/services/templates.js/extensions',
             cache: false,
             async: false
         }).responseText;
