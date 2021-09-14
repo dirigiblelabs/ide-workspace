@@ -455,7 +455,7 @@ WorkspaceTreeAdapter.prototype.init = function (containerEl, workspaceController
         }.bind(this))
         .on('jstree.workspace.delete', function (e, data) {
             this.workspaceController.selectedNodeData = data;
-            $('#deleteProject').click();
+            this.workspaceController.showDeleteDialog(data.type);
         }.bind(this))
         //	.on('jstree.workspace.file.properties', function (e, data) {
         //	 	var url = data.path + '/' + data.name;
@@ -1214,12 +1214,19 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
         return new WorkspaceTreeAdapter($treeConfig, WorkspaceService, publishService, exportService, messageHub);
     }])
     .controller('WorkspaceController', ['workspaceService', 'workspaceTreeAdapter', 'publishService', 'exportService', 'templatesService', 'generationService', 'messageHub', '$scope', function (workspaceService, workspaceTreeAdapter, publishService, exportService, templatesService, generationService, messageHub, $scope) {
-
+        $scope.selectedNodeType = "";
         this.wsTree;
         this.workspaces;
         this.selectedWorkspace;
         this.selectedTemplate;
         this.unpublishOnDelete = true;
+
+        this.showDeleteDialog = function (type) {
+            this.unpublishOnDelete = true;
+            $scope.selectedNodeType = type;
+            $scope.$apply(); // Because of JQuery and the bootstrap modal
+            $('#deleteProject').click();
+        };
 
         this.refreshTemplates = function () {
             templatesService.listTemplates()
