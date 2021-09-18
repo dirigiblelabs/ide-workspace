@@ -8,13 +8,12 @@
  * Contributors:
  *   SAP - initial API and implementation
  */
-exports.getTemplate = function() {
-	var view = {
-			"name":"javascript",
-			"label":"Javascript Service",
-			"extension":"js",
-			"data":'var response = require("http/v4/response");\n\nresponse.println("Hello World!");\nresponse.flush();\nresponse.close();',
-			"order": 0
+exports.getTemplate = function () {
+	return {
+		"name": "javascript",
+		"label": "Javascript Service",
+		"extension": "js",
+		"data": 'var response = require("http/v4/response");\n\nresponse.println("Hello World!");\nresponse.flush();\nresponse.close();',
+		"order": 0
 	};
-	return view;
 };

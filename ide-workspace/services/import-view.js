@@ -8,14 +8,13 @@
  * Contributors:
  *   SAP - initial API and implementation
  */
-exports.getView = function() {
-	var view = {
-			"id":"search",
-			"name":"Search",
-			"factory":"frame",
-			"region":"left-top",
-			"label":"Search",
-			"link":"../ide-workspace/search.html"
+exports.getView = function () {
+	return {
+		"id": "search",
+		"name": "Search",
+		"factory": "frame",
+		"region": "left-top",
+		"label": "Search",
+		"link": "../ide-workspace/search.html"
 	};
-	return view;
 };

@@ -8,23 +8,23 @@
  * Contributors:
  *   SAP - initial API and implementation
  */
-var extensions = require('core/v4/extensions');
-var response = require('http/v4/response');
+let extensions = require('core/v4/extensions');
+let response = require('http/v4/response');
 
-var templates = [];
-var templateExtensions = extensions.getExtensions('ide-workspace-menu-new-template');
+let templates = [];
+let templateExtensions = extensions.getExtensions('ide-workspace-menu-new-template');
 
-for (var i = 0; i < templateExtensions.length; i++) {
-    var module = templateExtensions[i];
-    try {
-    	var templateExtension = require(module);
-    	var template = templateExtension.getTemplate();
-    	template.id = module;
-    	templates.push(template);
-    } catch(error) {
-    	console.error('Error occured while loading metadata for the template: ' + module);
-    	console.error(error);
-    }
+for (let i = 0; i < templateExtensions.length; i++) {
+	let module = templateExtensions[i];
+	try {
+		let templateExtension = require(module);
+		let template = templateExtension.getTemplate();
+		template.id = module;
+		templates.push(template);
+	} catch (error) {
+		console.error('Error occured while loading metadata for the template: ' + module);
+		console.error(error);
+	}
 }
 
 templates = templates.sort((a, b) => a.label.toLowerCase().localeCompare(b.label.toLowerCase()));
