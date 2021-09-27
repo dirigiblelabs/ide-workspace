@@ -77,7 +77,6 @@ let WorkspaceTreeAdapter = function (treeConfig, workspaceService, messageHub) {
 			f.label = f.name;
 			return {
 				"text": f.path.substring(f.path.indexOf('/', 1)),
-				"children": children,
 				"type": f.type,
 				"_file": f
 			}
