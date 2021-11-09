@@ -910,39 +910,7 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
                     return true;
                 }
             },
-            'plugins': ['state', 'dnd', 'sort', 'types', 'contextmenu', 'unique'],
-            'unique': {
-                'newNodeName': function (node, typesConfig) {
-                    let typeCfg = typesConfig[node.type] || typesConfig['default'];
-                    let name = typeCfg.default_name || typesConfig['default'].default_name || 'file';
-                    let tmplName = typeCfg.template_new_name || typesConfig['default'].template_new_name || '{name}{ext}';
-                    let parameters = {
-                        '{name}': name,
-                        '{counter}': '',
-                        '{ext}': typeCfg.ext || typesConfig['default'].ext || ''
-                    };
-                    let regex = new RegExp(Object.keys(parameters).join('|'), 'g');
-                    let fName = tmplName.replace(regex, function (m) {
-                        return parameters[m] !== undefined ? parameters[m] : m;
-                    });
-                    return fName;
-                },
-                'duplicate': function (name, counter, node, typesConfig) {
-                    let typeCfg = typesConfig[node.type] || typesConfig['default'];
-                    let new_name = typeCfg.default_name || typesConfig['default'].default_name || 'file';
-                    let tmplName = typeCfg.template_new_name || typesConfig['default'].template_new_name || '{name}{counter}{ext}';
-                    let parameters = {
-                        '{name}': name,
-                        '{counter}': counter,
-                        '{ext}': typeCfg.ext
-                    };
-                    let regex = new RegExp(Object.keys(parameters).join('|'), 'g');
-                    let fName = tmplName.replace(regex, function (m) {
-                        return parameters[m] !== undefined ? parameters[m] : m;
-                    });
-                    return fName;
-                }
-            },
+            'plugins': ['state', 'dnd', 'sort', 'types', 'contextmenu'],
             "types": {
                 "default": {
                     "icon": "fa fa-file-o",
