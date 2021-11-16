@@ -9,13 +9,11 @@
  * SPDX-FileCopyrightText: 2021 SAP SE or an SAP affiliate company and Eclipse Dirigible contributors
  * SPDX-License-Identifier: EPL-2.0
  */
-exports.getView = function () {
+exports.getTemplate = function() {
 	return {
-		"id": "import",
-		"name": "Import",
-		"factory": "frame",
-		"region": "left-top",
-		"label": "Import",
-		"link": "../ide-workspace/import.html"
+			"name":"html",
+			"label":"HTML5 Page",
+			"extension":"html",
+			"data":'<!DOCTYPE html>\n<head>\n</head>\n<body>\n</body>\n</html>'
 	};
 };

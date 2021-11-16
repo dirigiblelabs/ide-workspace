@@ -1,14 +1,14 @@
 /*
- * Copyright (c) 2010-2021 SAP and others.
+ * Copyright (c) 2021 SAP SE or an SAP affiliate company and Eclipse Dirigible contributors
+ *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v20.html
  *
- * Contributors:
- *   SAP - initial API and implementation
+ * SPDX-FileCopyrightText: 2021 SAP SE or an SAP affiliate company and Eclipse Dirigible contributors
+ * SPDX-License-Identifier: EPL-2.0
  */
-
 /**
  * Used to enable and disable the paste context menu option.
  */
@@ -283,9 +283,13 @@ WorkspaceService.prototype.createProject = function (workspace, project, wsTree)
         });
 };
 WorkspaceService.prototype.deleteProject = function (workspace, project, wsTree) {
-    let url = new UriBuilder().path(this.workspacesServiceUrl.split('/')).path(workspace).path(project).build();
+    let url = new UriBuilder().path(this.workspacesServiceUrl.split('/')).path(workspace).path(project.name).build();
     return this.$http.delete(url, { headers: { 'Dirigible-Editor': 'Workspace' } })
         .then(function (response) {
+            project.files.forEach(function (f) {
+                wsTree.messageHub.announceFileDeleted(f);
+            });
+
             wsTree.refresh();
             return response.data;
         });
@@ -533,7 +537,7 @@ WorkspaceTreeAdapter.prototype.renameNode = function (node, oldName, newName) {
     }
 };
 WorkspaceTreeAdapter.prototype.moveNode = function (sourceParentNode, node) {
-    //strip the "/{workspace}" segment from paths and the file segment from source path (for consistency)
+    //strip the "/{workspace}" segment from paths and the file segment from source path (for consistency) 
     let sourcepath = sourceParentNode.original._file.path.substring(this.workspaceName.length + 1);
     let tagetParentNode = this.jstree.get_node(node.parent);
     let targetpath = tagetParentNode.original._file.path.substring(this.workspaceName.length + 1);
@@ -906,39 +910,7 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
                     return true;
                 }
             },
-            'plugins': ['state', 'dnd', 'sort', 'types', 'contextmenu', 'unique'],
-            'unique': {
-                'newNodeName': function (node, typesConfig) {
-                    let typeCfg = typesConfig[node.type] || typesConfig['default'];
-                    let name = typeCfg.default_name || typesConfig['default'].default_name || 'file';
-                    let tmplName = typeCfg.template_new_name || typesConfig['default'].template_new_name || '{name}{ext}';
-                    let parameters = {
-                        '{name}': name,
-                        '{counter}': '',
-                        '{ext}': typeCfg.ext || typesConfig['default'].ext || ''
-                    };
-                    let regex = new RegExp(Object.keys(parameters).join('|'), 'g');
-                    let fName = tmplName.replace(regex, function (m) {
-                        return parameters[m] !== undefined ? parameters[m] : m;
-                    });
-                    return fName;
-                },
-                'duplicate': function (name, counter, node, typesConfig) {
-                    let typeCfg = typesConfig[node.type] || typesConfig['default'];
-                    let new_name = typeCfg.default_name || typesConfig['default'].default_name || 'file';
-                    let tmplName = typeCfg.template_new_name || typesConfig['default'].template_new_name || '{name}{counter}{ext}';
-                    let parameters = {
-                        '{name}': name,
-                        '{counter}': counter,
-                        '{ext}': typeCfg.ext
-                    };
-                    let regex = new RegExp(Object.keys(parameters).join('|'), 'g');
-                    let fName = tmplName.replace(regex, function (m) {
-                        return parameters[m] !== undefined ? parameters[m] : m;
-                    });
-                    return fName;
-                }
-            },
+            'plugins': ['state', 'dnd', 'sort', 'types', 'contextmenu'],
             "types": {
                 "default": {
                     "icon": "fa fa-file-o",
@@ -1324,7 +1296,7 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
                     }.bind(this));
             }
             if (this.selectedNodeData.type === "project") {
-                workspaceService.deleteProject(this.selectedWorkspace, this.selectedNodeData.name, this.wsTree);
+                workspaceService.deleteProject(this.selectedWorkspace, this.selectedNodeData, this.wsTree);
             } else {
                 workspaceTreeAdapter.deleteNode(this.selectedNodeData);
             }
@@ -1469,7 +1441,7 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
     }]);
 
 const images = ['png', 'jpg', 'jpeg', 'gif'];
-const models = ['extension', 'extensionpoint', 'edm', 'model', 'dsm', 'schema', 'bpmn', 'job', 'xsjob','listener', 'websocket', 'roles', 'constraints', 'table', 'view'];
+const models = ['extension', 'extensionpoint', 'edm', 'model', 'dsm', 'schema', 'bpmn', 'job', 'listener', 'websocket', 'roles', 'constraints', 'table', 'view'];
 
 function getIcon(f) {
     let icon;
@@ -1477,7 +1449,7 @@ function getIcon(f) {
         icon = "fa fa-git-square";
     } else if (f.type === 'file') {
         let ext = getFileExtension(f.name);
-        if (ext === 'js'||ext === 'xsjs' ) {
+        if (ext === 'js'|| ext === 'mjs') {
             icon = "fa fa-file-code-o";
         } else if (ext === 'html') {
             icon = "fa fa-html5";
