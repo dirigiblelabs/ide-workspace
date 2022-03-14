@@ -254,6 +254,39 @@ WorkspaceService.prototype.copy = function (sourcePath, targetPath, sourceWorksp
         target: targetPath + '/'
     });
 };
+WorkspaceService.prototype.copySelection = function (sourceSelection, targetPath, conflictsResolution) {
+    let targetWorkspace = targetPath.split('/')[1];
+    let url = new UriBuilder().path(this.workspaceManagerServiceUrl.split('/')).path(targetWorkspace).path('copySelection').build();
+    let sourceWorkspace = sourceSelection[0].path.split('/')[1];
+    console.log('COPY SELECTION', sourceSelection)
+    console.log('COPY TO', targetPath)
+    console.log('RESOLUTION', conflictsResolution);
+    for (let i = 0; i < conflictsResolution.length; i++) {
+        sourceSelection.find((o, j) => {
+            if (o.path === conflictsResolution[i].source) {
+                sourceSelection[j].resolution = conflictsResolution[i].resolution;
+                return true;
+            }
+        })
+    }
+
+    let postRequest = {
+        sourceWorkspace: sourceWorkspace,
+        source: sourceSelection,
+        targetWorkspace: targetWorkspace,
+        target: targetPath + '/'
+    };
+    console.log('POST URL', url);
+    console.log('POST PAYLOAD', postRequest);
+    return;
+    return this.$http.post(url, {
+        sourceWorkspace: sourceWorkspace,
+        source: sourceSelection,
+        targetWorkspace: targetWorkspace,
+        target: targetPath + '/',
+        resolution: conflictsResolution
+    });
+};
 WorkspaceService.prototype.load = function (wsResourcePath) {
     let url = new UriBuilder().path(this.workspacesServiceUrl.split('/')).path(wsResourcePath.split('/')).build();
     return this.$http.get(url, { headers: { 'describe': 'application/json' } })
@@ -365,6 +398,7 @@ WorkspaceTreeAdapter.prototype.init = function (containerEl, workspaceController
     this.scope = scope;
     this.copy_node = null;
     this.nodes_selected = [];
+    this.paths_selected = [];
 
     let self = this;
     let jstree = this.containerEl.jstree(this.treeConfig);
@@ -580,16 +614,17 @@ WorkspaceTreeAdapter.prototype.allPathsInSelection = function (selection) {
 WorkspaceTreeAdapter.prototype.removeKnownRoot = function (paths, root) {
     return paths.filter(node => node.path != root).map(
         (elem) => {
-            if (elem.path.slice(0, root.length + 1) === `${root}/`)
+            if (elem.path.slice(0, root.length + 1) === `${root}/` && (!elem.norootpath || elem.norootpath == elem.path)) {
                 return { ...elem, norootpath: elem.path.slice(root.length + 1) }
+            }
             else
-                return { ...elem, norootpath: elem.path };
+                return { ...elem, norootpath: elem.norootpath ? elem.norootpath : elem.path };
         })
 };
 WorkspaceTreeAdapter.prototype.removeRootsFromCopied = function (all_paths_selected, nodes_selected) {
     let paths = all_paths_selected;
     for (let i = 0; i < nodes_selected.length; i++) {
-        paths = this.removeKnownRoot(all_paths_selected,
+        paths = this.removeKnownRoot(paths,
             nodes_selected[i].path.slice(0, nodes_selected[i].path.length - nodes_selected[i].name.length - 1));
     }
     return paths;
@@ -618,6 +653,7 @@ WorkspaceTreeAdapter.prototype.fileCopyConflicts = function (node) {
             }
         }
     }
+    this.paths_selected = unrootedPathInCopy;
     console.log('CONFLICTS', conflicts)
     return conflicts;
 };
@@ -678,7 +714,7 @@ WorkspaceTreeAdapter.prototype.paste = function (node) {
         let potential_conflicts = this.fileCopyConflicts(node);
         if (potential_conflicts.length) {
             console.log("CONFLICTS FOUND");
-            this.workspaceController.showConflictsDialog(potential_conflicts, this.nodes_selected, this.copy_node, node);
+            this.workspaceController.showConflictsDialog(potential_conflicts, this.paths_selected, this.copy_node, node);
             return;
         } else {
             this.copyNode(this.copy_node, node);
@@ -1288,6 +1324,7 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
         this.workspaces;
         this.selectedWorkspace;
         this.selectedTemplate;
+        this.workspaceService = workspaceService;
         this.unpublishOnDelete = true;
         this.workspaceTreeAdapter = workspaceTreeAdapter;
         this.conflictApplyAll = false;
@@ -1319,8 +1356,8 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
             for (let i = startRange; i < endRange; i++)
                 $scope.resolvedConflicts.push({ ...$scope.copyConflicts[i], resolution: resolution });
             if ($scope.resolvedConflicts.length == $scope.copyConflicts.length) {
-                console.log('ALL CONFLICTS RESOLVED', $scope.resolvedConflicts)
-                // this.workspaceTreeAdapter.copyNode($scope.copyNode, $scope.copyTo)
+                console.log('ALL CONFLICTS RESOLVED', $scope.resolvedConflicts);
+                this.workspaceService.copySelection($scope.copyWhich, $scope.copyTo.original._file.path, $scope.resolvedConflicts);
                 $('#resolveConflicts').click();
             }
         }
