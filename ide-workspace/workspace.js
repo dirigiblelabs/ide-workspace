@@ -272,20 +272,14 @@ WorkspaceService.prototype.copySelection = function (sourceSelection, targetPath
 
     let postRequest = {
         sourceWorkspace: sourceWorkspace,
-        source: sourceSelection,
+        sourceSelection: sourceSelection,
         targetWorkspace: targetWorkspace,
         target: targetPath + '/'
     };
     console.log('POST URL', url);
     console.log('POST PAYLOAD', postRequest);
-    return;
-    return this.$http.post(url, {
-        sourceWorkspace: sourceWorkspace,
-        source: sourceSelection,
-        targetWorkspace: targetWorkspace,
-        target: targetPath + '/',
-        resolution: conflictsResolution
-    });
+
+    return this.$http.post(url, postRequest);
 };
 WorkspaceService.prototype.load = function (wsResourcePath) {
     let url = new UriBuilder().path(this.workspacesServiceUrl.split('/')).path(wsResourcePath.split('/')).build();
@@ -717,7 +711,11 @@ WorkspaceTreeAdapter.prototype.paste = function (node) {
             this.workspaceController.showConflictsDialog(potential_conflicts, this.paths_selected, this.copy_node, node);
             return;
         } else {
-            this.copyNode(this.copy_node, node);
+            console.log("NO CONFLICTS COPY")
+            console.log(this.paths_selected)
+            console.log(node.original._file.path)
+            this.workspaceService.copySelection(this.paths_selected, node.original._file.path, []);
+            // this.copyNode(this.copy_node, node);
         }
     }
     this.copy_node = null;
