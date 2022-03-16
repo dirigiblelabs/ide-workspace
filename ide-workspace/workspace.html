@@ -106,8 +106,8 @@
                         ng-click="workspace.publish()"><i class="fa fa-play-circle"></i></button>
                     <!-- <button type="button" class="btn btn-default btn-top" title="Export All" ng-click="workspace.exportWorkspace()"><i class="fa fa-arrow-circle-down"></i></button> -->
 
-                    <button type="button" class="btn btn-default btn-top" title="Refresh"
-                        ng-click="workspace.refresh()"><i class="fa fa-refresh"></i></button>
+                    <button type="button" class="btn btn-default btn-top" title="Refresh" ng-click="workspace.refresh()"
+                        id="refreshButton"><i class="fa fa-refresh"></i></button>
 
                     <select ng-model="workspace.selectedWorkspace" ng-options="o as o for o in workspace.workspaces"
                         ng-change="workspace.workspaceSelected()"

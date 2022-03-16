@@ -254,7 +254,7 @@ WorkspaceService.prototype.copy = function (sourcePath, targetPath, sourceWorksp
         target: targetPath + '/'
     });
 };
-WorkspaceService.prototype.copySelection = function (sourceSelection, targetPath, conflictsResolution) {
+WorkspaceService.prototype.copySelection = function (sourceSelection, targetPath, conflictsResolution, wsTree) {
     let targetWorkspace = targetPath.split('/')[1];
     let url = new UriBuilder().path(this.workspaceManagerServiceUrl.split('/')).path(targetWorkspace).path('copySelection').build();
     let sourceWorkspace = sourceSelection[0].path.split('/')[1];
@@ -279,7 +279,11 @@ WorkspaceService.prototype.copySelection = function (sourceSelection, targetPath
     console.log('POST URL', url);
     console.log('POST PAYLOAD', postRequest);
 
-    return this.$http.post(url, postRequest);
+    return this.$http.post(url, postRequest)
+        .then(function (response) {
+            $('#refreshButton').click();
+            return response.data;
+        });
 };
 WorkspaceService.prototype.load = function (wsResourcePath) {
     let url = new UriBuilder().path(this.workspacesServiceUrl.split('/')).path(wsResourcePath.split('/')).build();
@@ -717,7 +721,7 @@ WorkspaceTreeAdapter.prototype.paste = function (node) {
             if (this.paths_selected.length == 1)
                 this.copyNode(this.copy_node, node)
             else
-                this.workspaceService.copySelection(this.paths_selected, node.original._file.path, []);
+                this.workspaceService.copySelection(this.paths_selected, node.original._file.path, [], this.wsTree);
         }
     }
     this.copy_node = null;
