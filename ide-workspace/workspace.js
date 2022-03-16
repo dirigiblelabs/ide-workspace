@@ -713,9 +713,11 @@ WorkspaceTreeAdapter.prototype.paste = function (node) {
         } else {
             console.log("NO CONFLICTS COPY")
             console.log(this.paths_selected)
-            console.log(node.original._file.path)
-            this.workspaceService.copySelection(this.paths_selected, node.original._file.path, []);
-            // this.copyNode(this.copy_node, node);
+            console.log(node.original._file.path);
+            if (this.paths_selected.length == 1)
+                this.copyNode(this.copy_node, node)
+            else
+                this.workspaceService.copySelection(this.paths_selected, node.original._file.path, []);
         }
     }
     this.copy_node = null;
