@@ -258,9 +258,6 @@ WorkspaceService.prototype.copySelection = function (sourceSelection, targetPath
     let targetWorkspace = targetPath.split('/')[1];
     let url = new UriBuilder().path(this.workspaceManagerServiceUrl.split('/')).path(targetWorkspace).path('copySelection').build();
     let sourceWorkspace = sourceSelection[0].path.split('/')[1];
-    console.log('COPY SELECTION', sourceSelection)
-    console.log('COPY TO', targetPath)
-    console.log('RESOLUTION', conflictsResolution);
     for (let i = 0; i < conflictsResolution.length; i++) {
         sourceSelection.find((o, j) => {
             if (o.path === conflictsResolution[i].source) {
@@ -276,8 +273,6 @@ WorkspaceService.prototype.copySelection = function (sourceSelection, targetPath
         targetWorkspace: targetWorkspace,
         target: targetPath + '/'
     };
-    console.log('POST URL', url);
-    console.log('POST PAYLOAD', postRequest);
 
     return this.$http.post(url, postRequest)
         .then(function (response) {
@@ -630,12 +625,9 @@ WorkspaceTreeAdapter.prototype.removeRootsFromCopied = function (all_paths_selec
 WorkspaceTreeAdapter.prototype.fileCopyConflicts = function (node) {
     let pathsInCopy = this.allPathsInSelection(this.nodes_selected);
     let pathsInPaste = this.allPathsInSelection([node.original._file]);
-    console.log('SELECTION PATHS', pathsInCopy);
 
     let unrootedPathInCopy = this.removeRootsFromCopied(pathsInCopy, this.nodes_selected);
     let unrootedPathInPaste = this.removeKnownRoot(pathsInPaste, pathsInPaste[0].path)
-    console.log('WO ROOT COPIED', unrootedPathInCopy)
-    console.log('WO ROOT in paste tree', unrootedPathInPaste);
 
     let conflicts = [];
     for (let i = 0; i < unrootedPathInCopy.length; i++) {
@@ -652,7 +644,6 @@ WorkspaceTreeAdapter.prototype.fileCopyConflicts = function (node) {
         }
     }
     this.paths_selected = unrootedPathInCopy;
-    console.log('CONFLICTS', conflicts)
     return conflicts;
 };
 WorkspaceTreeAdapter.prototype.copyNode = function (sourceParentNode, node) {
@@ -698,8 +689,6 @@ WorkspaceTreeAdapter.prototype.raw = function () {
     return this.jstree;
 };
 WorkspaceTreeAdapter.prototype.copy = function (node) {
-    console.log('NODE COPIED', node);
-    console.log('SELECTED NODES', this.workspaceController.selectedNodeData);
     this.nodes_selected = this.workspaceController.selectedNodeData;
     this.copy_node = node;
     pasteObject.canPaste = true;
@@ -707,17 +696,11 @@ WorkspaceTreeAdapter.prototype.copy = function (node) {
 };
 WorkspaceTreeAdapter.prototype.paste = function (node) {
     if (this.copy_node && this.copy_node !== null) {
-        console.log("MUST COPY what", this.nodes_selected);
-        console.log("MUST COPY to", node);
         let potential_conflicts = this.fileCopyConflicts(node);
         if (potential_conflicts.length) {
-            console.log("CONFLICTS FOUND");
             this.workspaceController.showConflictsDialog(potential_conflicts, this.paths_selected, this.copy_node, node);
             return;
         } else {
-            console.log("NO CONFLICTS COPY")
-            console.log(this.paths_selected)
-            console.log(node.original._file.path);
             if (this.paths_selected.length == 1)
                 this.copyNode(this.copy_node, node)
             else
@@ -1360,7 +1343,6 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
             for (let i = startRange; i < endRange; i++)
                 $scope.resolvedConflicts.push({ ...$scope.copyConflicts[i], resolution: resolution });
             if ($scope.resolvedConflicts.length == $scope.copyConflicts.length) {
-                console.log('ALL CONFLICTS RESOLVED', $scope.resolvedConflicts);
                 this.workspaceService.copySelection($scope.copyWhich, $scope.copyTo.original._file.path, $scope.resolvedConflicts);
                 $('#resolveConflicts').click();
             }
