@@ -77,6 +77,8 @@
                         data-target="#dialogGenerateFromModel"></button>
                     <button type="button" id="uploadFile" ng-show="false" data-toggle="modal"
                         data-target="#dialogUploadFile"></button>
+                    <button type="button" id="uploadZipToFolder" ng-show="false" data-toggle="modal"
+                        data-target="#dialogUploadZipToFolder"></button>
                     <button type="button" id="resolveConflicts" ng-show="false" data-toggle="modal"
                         data-target="#dialogResolveConflicts"></button>
 
@@ -309,6 +311,28 @@
             <div class="modal-footer">
                 <button class="btn btn-primary" ng-click="workspace.okUploadFile()" data-toggle="modal"
                     data-target="#dialogUploadFile">Upload</button>
+                <button class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+
+        <!-- Import in folder from ZIP -->
+        <div class="dirigible-modal modal fade" id="dialogUploadZipToFolder" tabindex="-1" role="dialog"
+            aria-labelledby="dialogUploadZipToFolderLabel" aria-hidden="true">
+            <div class="modal-header">
+                <h4>Import files from ZIP</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group row">
+                    <label class="col-xs-3 col-form-label">Select File:</label>
+                    <div class="col-xs-9">
+                        <input id="uploadZipFileField" class="form-control" type="file" placeholder="file name"
+                            required="required">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" ng-click="workspace.okUploadZipFile()" data-toggle="modal"
+                    data-target="#dialogUploadZipToFolder">Upload and extract</button>
                 <button class="btn btn-default" data-dismiss="modal">Cancel</button>
             </div>
         </div>

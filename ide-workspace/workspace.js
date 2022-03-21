@@ -487,6 +487,9 @@ WorkspaceTreeAdapter.prototype.init = function (containerEl, workspaceController
         .on('jstree.workspace.paste', function (e, data) {
             this.paste(data);
         }.bind(this))
+        .on('jstree.workspace.uploadZipToFolder', function (e, data) {
+            this.uploadZipToFolder(data);
+        }.bind(this))
         .on('jstree.workspace.delete', function (e, data) {
             this.workspaceController.showDeleteDialog(this.workspaceController.selectedNodeData.length == 1
                 ? this.workspaceController.selectedNodeData[0].type :
@@ -794,6 +797,17 @@ WorkspaceTreeAdapter.prototype.uploadFileInPlace = function (resource, scope) {
         scope.$apply();
         $('#uploadFile').click();
     }
+};
+
+WorkspaceTreeAdapter.prototype.uploadZipToFolder = function (resource, scope) {
+    let segments = resource.path.split('/');
+    this.workspaceController.projectName = segments[2];
+    // if (resource.type === 'project' || resource.type === 'folder') {
+    //     segments = segments.splice(3, segments.length);
+    //     this.workspaceController.fileName = new UriBuilder().path(segments).build();
+    //     scope.$apply();
+    $('#uploadZipToFolder').click();
+    // }
 };
 
 let TemplatesService = function ($http, $window, TEMPLATES_SVC_URL) {
@@ -1229,6 +1243,19 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
                                 let tree = $.jstree.reference(data.reference);
                                 let node = tree.get_node(data.reference);
                                 tree.element.trigger('jstree.workspace.generate', [node.original._file]);
+                            }.bind(this)
+                        };
+                    }
+
+                    if (this.get_type(node) === "folder") {
+                        /*Import from zi*/
+                        ctxmenu.uploadZipToFolder = {
+                            "separator_before": true,
+                            "label": "Import files from ZIP",
+                            "action": function (data) {
+                                let tree = $.jstree.reference(data.reference);
+                                let node = tree.get_node(data.reference);
+                                tree.element.trigger('jstree.workspace.uploadZipToFolder', [node.original._file]);
                             }.bind(this)
                         };
                     }
