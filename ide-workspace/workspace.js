@@ -762,8 +762,13 @@ WorkspaceTreeAdapter.prototype.unpublish = function (resource) {
         }.bind(this));
 };
 WorkspaceTreeAdapter.prototype.exportProject = function (resource) {
-    if (resource.type === 'project') {
-        return this.exportService.exportProject(resource.path);
+    if (resource.type === 'project' || resource.type == 'folder') {
+        console.log(resource);
+        let segments = resource.path.split('/');
+        console.log("1st 2", segments.slice(0, 3).join("/"))
+        let callExportPath = segments.slice(0, 3).join("/") + '/' + encodeURIComponent(segments.slice(3).join("/"));
+        console.log(callExportPath)
+        return this.exportService.exportProject(callExportPath);
     }
 };
 WorkspaceTreeAdapter.prototype.generateFile = function (resource, scope) {
@@ -1228,7 +1233,7 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
                         };
                     }
 
-                    if (this.get_type(node) === "project") {
+                    if (this.get_type(node) === "project" || this.get_type(node) === "folder") {
                         /*Export*/
                         ctxmenu.exportProject = {
                             "separator_before": true,
