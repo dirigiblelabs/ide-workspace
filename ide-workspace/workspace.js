@@ -16,6 +16,7 @@ let pasteObject = {
     canPaste: false,
     type: "#"
 };
+let uploader = null;
 /**
  * Utility URL builder
  */
@@ -488,7 +489,7 @@ WorkspaceTreeAdapter.prototype.init = function (containerEl, workspaceController
             this.paste(data);
         }.bind(this))
         .on('jstree.workspace.uploadZipToFolder', function (e, data) {
-            this.uploadZipToFolder(data);
+            this.uploadZipToFolder(data, scope);
         }.bind(this))
         .on('jstree.workspace.delete', function (e, data) {
             this.workspaceController.showDeleteDialog(this.workspaceController.selectedNodeData.length == 1
@@ -802,12 +803,9 @@ WorkspaceTreeAdapter.prototype.uploadFileInPlace = function (resource, scope) {
 WorkspaceTreeAdapter.prototype.uploadZipToFolder = function (resource, scope) {
     let segments = resource.path.split('/');
     this.workspaceController.projectName = segments[2];
-    // if (resource.type === 'project' || resource.type === 'folder') {
-    //     segments = segments.splice(3, segments.length);
-    //     this.workspaceController.fileName = new UriBuilder().path(segments).build();
-    //     scope.$apply();
-    $('#uploadZipToFolder').click();
-    // }
+    let relativePath = this.removeKnownRoot([resource], "/" + this.workspaceController.selectedWorkspace + "/" + this.workspaceController.projectName)[0].norootpath;
+    scope.$apply();
+    this.workspaceController.showImportFromZipDialog(this.workspaceController.projectName, relativePath);
 };
 
 let TemplatesService = function ($http, $window, TEMPLATES_SVC_URL) {
@@ -828,7 +826,7 @@ angular.module('workspace.config', [])
     .constant('TEMPLATES_SVC_URL', '/services/v4/js/ide-core/services/templates.js')
     .constant('GENERATION_SVC_URL', '/services/v4/ide/generate');
 
-angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSanitize', 'ui.bootstrap'])
+angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSanitize', 'ui.bootstrap', 'angularFileUpload'])
     .factory('httpRequestInterceptor', function () {
         let csrfToken = null;
         return {
@@ -1337,11 +1335,10 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
     .factory('workspaceTreeAdapter', ['$treeConfig', 'workspaceService', 'publishService', 'exportService', 'messageHub', function ($treeConfig, WorkspaceService, publishService, exportService, messageHub) {
         return new WorkspaceTreeAdapter($treeConfig, WorkspaceService, publishService, exportService, messageHub);
     }])
-    .controller('WorkspaceController', ['workspaceService', 'workspaceTreeAdapter', 'publishService', 'exportService', 'templatesService', 'generationService', 'messageHub', '$scope', function (workspaceService, workspaceTreeAdapter, publishService, exportService, templatesService, generationService, messageHub, $scope) {
+    .controller('WorkspaceController', ['workspaceService', 'FileUploader', 'workspaceTreeAdapter', 'publishService', 'exportService', 'templatesService', 'generationService', 'messageHub', '$scope', function (workspaceService, FileUploader, workspaceTreeAdapter, publishService, exportService, templatesService, generationService, messageHub, $scope) {
         $scope.selectedNodeType = "";
         this.wsTree;
         this.workspaces;
-        this.selectedWorkspace;
         this.selectedTemplate;
         this.workspaceService = workspaceService;
         this.unpublishOnDelete = true;
@@ -1351,6 +1348,70 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
         $scope.resolvedConflicts = [];
         $scope.copyWhich = [];
         $scope.copyTo = {};
+        $scope.projectName = '';
+        $scope.pathToImportIn = '';
+
+        // FILE UPLOADER
+        $scope.uploader = uploader = new FileUploader({
+            url: $scope.TRANSPORT_PROJECT_URL
+        });
+
+        // UPLOADER FILTERS
+        uploader.filters.push({
+            name: 'customFilter',
+            fn: function (item /*{File|FileLikeObject}*/, options) {
+                return this.queue.length < 100;
+            }
+        });
+
+        // UPLOADER CALLBACKS
+
+        uploader.onWhenAddingFileFailed = function (item /*{File|FileLikeObject}*/, filter, options) {
+            console.info('onWhenAddingFileFailed', item, filter, options);
+        };
+        uploader.onAfterAddingFile = function (fileItem) {
+
+        };
+        uploader.onAfterAddingAll = function (addedFileItems) {
+            console.info('onAfterAddingAll', addedFileItems);
+        };
+        uploader.onBeforeUploadItem = function (item) {
+            console.info('onBeforeUploadItem', item);
+        };
+        uploader.onProgressItem = function (fileItem, progress) {
+            console.info('onProgressItem', fileItem, progress);
+        };
+        uploader.onProgressAll = function (progress) {
+            console.info('onProgressAll', progress);
+        };
+        uploader.onSuccessItem = function (fileItem, response, status, headers) {
+            console.info('onSuccessItem', fileItem, response, status, headers);
+        };
+        uploader.onErrorItem = function (fileItem, response, status, headers) {
+            console.info('onErrorItem', fileItem, response, status, headers);
+        };
+        uploader.onCancelItem = function (fileItem, response, status, headers) {
+            console.info('onCancelItem', fileItem, response, status, headers);
+        };
+        uploader.onCompleteItem = function (fileItem, response, status, headers) {
+            console.info('onCompleteItem', fileItem, response, status, headers);
+        };
+        uploader.onCompleteAll = function () {
+            console.log('COMPLETE UPLOAD');
+            this.clearQueue();
+            $('#uploadZipToFolder').click();
+            $('#refreshButton').click();
+        };
+
+        this.cancelImportFromZip = function (uploader) {
+            if (uploader.isUploading)
+                uploader.cancelAll();
+            uploader.clearQueue();
+        }
+
+        this.okUploadZipFiles = function (uploader) {
+            uploader.uploadAll();
+        }
 
         this.showDeleteDialog = function (type) {
             this.unpublishOnDelete = true;
@@ -1367,7 +1428,14 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
             $scope.copyNode = copyNode;
             $scope.$apply(); // Because of JQuery and the bootstrap modal
             $('#resolveConflicts').click();
-        };
+        }
+
+        this.showImportFromZipDialog = function (project, pathToImportIn) {
+            $scope.projectName = project;
+            $scope.pathToImportIn = pathToImportIn;
+            $scope.$apply(); // Because of JQuery and the bootstrap modal
+            $('#uploadZipToFolder').click();
+        }
 
         this.resolveConflict = function (resolution) {
             let startRange = $scope.resolvedConflicts.length;

@@ -29,6 +29,8 @@
         <script type="text/javascript" src="/webjars/angularjs/1.8.2/angular-animate.min.js"></script>
         <script type="text/javascript" src="/webjars/angularjs/1.8.2/angular-sanitize.min.js"></script>
 
+        <script type="text/javascript" src="js/angular-file-upload.min.js"></script>
+
         <!-- jsTree -->
         <link href="/services/v4/js/theme/resources.js/jstree.css" rel="stylesheet">
         <script type="text/javascript" src="/webjars/jstree/3.3.12/jstree.min.js"></script>
@@ -322,82 +324,138 @@
                 <h4>Import files from ZIP</h4>
             </div>
             <div class="modal-body">
-                <div class="form-group row">
-                    <label class="col-xs-3 col-form-label">Select File:</label>
-                    <div class="col-xs-9">
-                        <input id="uploadZipFileField" class="form-control" type="file" placeholder="file name"
-                            required="required">
+                <div class="row">
+                    <P>Import to project: <strong>{{projectName}}</strong><br>
+                        Extract to path: <strong>{{pathToImportIn}}</strong></p>
+                </div>
+                <div class="row" nv-file-drop="" uploader="uploader" filters="queueLimit, customFilter">
+                    <div class="row">
+                        <div class="col-md-9">
+                            <div ng-show="uploader.isHTML5">
+                                <!-- 3. nv-file-over uploader="link" over-class="className" -->
+                                <div class="well my-drop-zone" nv-file-over="" uploader="uploader">
+                                    Drop *.zip file(s) here
+                                </div>
+                            </div>
+                            <!-- Example: nv-file-select="" uploader="{Object}" options="{Object}" filters="{String}" -->
+                            or browse your file system
+                            <input type="file" nv-file-select="" uploader="uploader" /><br />
+                        </div>
+                    </div>
+                    <div class="col-md-12" style="margin-bottom: 40px">
+                        <h3>Upload queue</h3>
+                        <p>Queue length: {{ uploader.queue.length }}</p>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th width="50%">Name &amp; size</th>
+                                    <th ng-show="uploader.isHTML5">Progress</th>
+                                    <th ng-show="uploader.isHTML5">Remove</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="item in uploader.queue">
+                                    <td><strong>{{ item.file.name }}</strong><br>{{ item.file.size/1024/1024|number:2 }}
+                                        MB
+                                    </td>
+                                    <td ng-show="uploader.isHTML5">
+                                        <div class="progress" style="margin-bottom: 0;">
+                                            <div class="progress-bar" role="progressbar"
+                                                ng-style="{ 'width': item.progress + '%' }"></div>
+                                        </div>
+                                    </td>
+                                    <td nowrap>
+                                        <button type="button" class="btn btn-danger btn-xs" ng-click="item.remove()">
+                                            <span class="fa fa-trash"></span> Remove
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div>
+                            <div>
+                                Queue progress:
+                                <div class="progress" style="">
+                                    <div class="progress-bar" role="progressbar"
+                                        ng-style="{ 'width': uploader.progress + '%' }"></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-primary" ng-click="workspace.okUploadZipFile()" data-toggle="modal"
-                    data-target="#dialogUploadZipToFolder">Upload and extract</button>
-                <button class="btn btn-default" data-dismiss="modal">Cancel</button>
-            </div>
-        </div>
-
-        <!-- Delete -->
-        <div class="dirigible-modal modal fade" id="dialogDelete" tabindex="-1" role="dialog"
-            aria-labelledby="dialogDeleteLabel" aria-hidden="true">
-            <div class="modal-header">
-                <h4>Delete project</h4>
-            </div>
-            <div class="modal-body">
-                <div class="form-group row">
-                    <label class="col-xs-12 col-form-label">Do you want to delete the selected
-                        {{selectedNodeType}}?</label>
-                    <div class="small col-xs-12 checkbox">
-                        <label><input type="checkbox" value="" ng-model="workspace.unpublishOnDelete">Unpublish</label>
-                    </div>
-                    <label class="col-xs-12 small">If you don't unpublish the {{selectedNodeType}}, it will remain
-                        active
-                        but you will not be able to see or change it.</label>
+                <div class="modal-footer">
+                    <!--
+                        data-toggle="modal" data-target="#dialogUploadZipToFolder" -->
+                    <button class="btn btn-primary"
+                        ng-click="workspace.okUploadZipFiles(uploader, projectName, pathToImportIn)"
+                        ng-disabled="!uploader.getNotUploadedItems().length">Upload and extract</button>
+                    <button class="btn btn-default" data-dismiss="modal"
+                        ng-click="workspace.cancelImportFromZip(uploader)">Cancel</button>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-primary" ng-click="workspace.okDelete()" data-toggle="modal"
-                    data-target="#dialogDelete">Delete</button>
-                <button class="btn btn-default" data-dismiss="modal">Cancel</button>
-            </div>
-        </div>
 
-        <!-- Resolve Conflicts -->
-        <div class="dirigible-modal modal fade" id="dialogResolveConflicts" tabindex="-1" role="dialog"
-            aria-labelledby="resolveConflictsLabel" aria-hidden="true">
-            <div class="modal-header">
-                <h4>{{copyConflicts.length}} overwrite conflict(s) found</h4>
+            <!-- Delete -->
+            <div class="dirigible-modal modal fade" id="dialogDelete" tabindex="-1" role="dialog"
+                aria-labelledby="dialogDeleteLabel" aria-hidden="true">
+                <div class="modal-header">
+                    <h4>Delete project</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group row">
+                        <label class="col-xs-12 col-form-label">Do you want to delete the selected
+                            {{selectedNodeType}}?</label>
+                        <div class="small col-xs-12 checkbox">
+                            <label><input type="checkbox" value=""
+                                    ng-model="workspace.unpublishOnDelete">Unpublish</label>
+                        </div>
+                        <label class="col-xs-12 small">If you don't unpublish the {{selectedNodeType}}, it will remain
+                            active
+                            but you will not be able to see or change it.</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" ng-click="workspace.okDelete()" data-toggle="modal"
+                        data-target="#dialogDelete">Delete</button>
+                    <button class="btn btn-default" data-dismiss="modal">Cancel</button>
+                </div>
             </div>
-            <div class="modal-body">
-                <div class="form-group row">
-                    <label class="col-xs-12 col-form-label">
-                        Source file exists in target destination: <br>
-                        <strong>{{copyConflicts[resolvedConflicts.length].norootpath}}</strong><br>
-                        from {{copyConflicts[resolvedConflicts.length].source.split('/').slice(0, -1).join('/')}}
-                    </label>
-                    <label class="col-xs-12 col-form-label">
-                        Please, select an action</label>
-                    <div class="small col-xs-12 checkbox"
-                        ng-show="copyConflicts.length > 1 && resolvedConflicts.length < copyConflicts.length - 1">
-                        <label><input type="checkbox" value="" ng-model="workspace.conflictApplyAll">Apply to all
-                            {{copyConflicts.length - resolvedConflicts.length - 1}} remaining conflict(s)
+
+            <!-- Resolve Conflicts -->
+            <div class="dirigible-modal modal fade" id="dialogResolveConflicts" tabindex="-1" role="dialog"
+                aria-labelledby="resolveConflictsLabel" aria-hidden="true">
+                <div class="modal-header">
+                    <h4>{{copyConflicts.length}} overwrite conflict(s) found</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group row">
+                        <label class="col-xs-12 col-form-label">
+                            Source file exists in target destination: <br>
+                            <strong>{{copyConflicts[resolvedConflicts.length].norootpath}}</strong><br>
+                            from {{copyConflicts[resolvedConflicts.length].source.split('/').slice(0, -1).join('/')}}
                         </label>
+                        <label class="col-xs-12 col-form-label">
+                            Please, select an action</label>
+                        <div class="small col-xs-12 checkbox"
+                            ng-show="copyConflicts.length > 1 && resolvedConflicts.length < copyConflicts.length - 1">
+                            <label><input type="checkbox" value="" ng-model="workspace.conflictApplyAll">Apply to all
+                                {{copyConflicts.length - resolvedConflicts.length - 1}} remaining conflict(s)
+                            </label>
+                        </div>
                     </div>
                 </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" ng-click="workspace.resolveConflict('replace')">Replace</button>
+                    <button class="btn btn-primary" ng-click="workspace.resolveConflict('rename')">Rename (keep
+                        both)</button>
+                    <button class="btn btn-default" ng-click="workspace.resolveConflict('skip')">Skip</button>
+                </div>
+                <div class="modal-footer" ng-show="copyConflicts.length">
+                    <button class="btn btn-default" ng-click="workspace.cancelCopy()" data-toggle="modal"
+                        data-target="#dialogResolveConflicts">Cancel all</button>
+                </div>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-primary" ng-click="workspace.resolveConflict('replace')">Replace</button>
-                <button class="btn btn-primary" ng-click="workspace.resolveConflict('rename')">Rename (keep
-                    both)</button>
-                <button class="btn btn-default" ng-click="workspace.resolveConflict('skip')">Skip</button>
-            </div>
-            <div class="modal-footer" ng-show="copyConflicts.length">
-                <button class="btn btn-default" ng-click="workspace.cancelCopy()" data-toggle="modal"
-                    data-target="#dialogResolveConflicts">Cancel all</button>
-            </div>
-        </div>
 
-        <script type="text/javascript" src="workspace.js"></script>
+            <script type="text/javascript" src="workspace.js"></script>
     </body>
 
 </html>
