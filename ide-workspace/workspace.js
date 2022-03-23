@@ -802,9 +802,15 @@ WorkspaceTreeAdapter.prototype.uploadFileInPlace = function (resource, scope) {
 
 WorkspaceTreeAdapter.prototype.uploadZipToFolder = function (resource, scope) {
     let segments = resource.path.split('/');
+    console.log("SEGMENTS", segments)
+    console.log("RESOURCE", resource)
+
     this.workspaceController.projectName = segments[2];
-    let relativePath = this.removeKnownRoot([resource], "/" + this.workspaceController.selectedWorkspace + "/" + this.workspaceController.projectName)[0].norootpath;
-    scope.$apply();
+    let relativePath = '';
+    if (resource.type == "folder") {
+        relativePath = this.removeKnownRoot([resource], "/" + this.workspaceController.selectedWorkspace + "/" + this.workspaceController.projectName)[0].norootpath;
+    }
+    // scope.$apply();
     this.workspaceController.showImportFromZipDialog(this.workspaceController.projectName, relativePath);
 };
 
@@ -1245,14 +1251,15 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
                         };
                     }
 
-                    if (this.get_type(node) === "folder") {
-                        /*Import from zi*/
+                    if (this.get_type(node) === "folder" || this.get_type(node) == "project") {
+                        /*Import from zip*/
                         ctxmenu.uploadZipToFolder = {
                             "separator_before": true,
                             "label": "Import files from ZIP",
                             "action": function (data) {
                                 let tree = $.jstree.reference(data.reference);
                                 let node = tree.get_node(data.reference);
+                                console.log("NODE SELECTED", node)
                                 tree.element.trigger('jstree.workspace.uploadZipToFolder', [node.original._file]);
                             }.bind(this)
                         };
@@ -1352,6 +1359,7 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
         $scope.pathToImportIn = '';
 
         $scope.TRANSPORT_PROJECT_URL = "/services/v4/transport/project";
+        $scope.TRANSPORT_ZIPTOFOLDER_URL = "/services/v4/transport/zipimport";
 
         // FILE UPLOADER
         $scope.uploader = uploader = new FileUploader({
@@ -1382,7 +1390,7 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
         uploader.onBeforeUploadItem = function (item) {
             $scope.selectedWorkspace = 'workspace'
             let internalPath = encodeURIComponent($scope.pathToImportIn);
-            item.url = $scope.TRANSPORT_PROJECT_URL + "/" + $scope.selectedWorkspace + "/" + $scope.projectName + "/" + internalPath;
+            item.url = $scope.TRANSPORT_ZIPTOFOLDER_URL + "/" + $scope.selectedWorkspace + "/" + $scope.projectName + "/" + internalPath;
             $scope.uploader.url = item.url;
             console.info('onBeforeUploadItem', item);
             console.log("UPLOADER", $scope.uploader)
