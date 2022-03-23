@@ -1351,9 +1351,12 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
         $scope.projectName = '';
         $scope.pathToImportIn = '';
 
+        $scope.TRANSPORT_PROJECT_URL = "/services/v4/transport/project";
+
         // FILE UPLOADER
         $scope.uploader = uploader = new FileUploader({
-            url: $scope.TRANSPORT_PROJECT_URL
+            url: $scope.TRANSPORT_PROJECT_URL,
+            removeAfterUpload: true
         });
 
         // UPLOADER FILTERS
@@ -1371,12 +1374,18 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
         };
         uploader.onAfterAddingFile = function (fileItem) {
 
+
         };
         uploader.onAfterAddingAll = function (addedFileItems) {
             console.info('onAfterAddingAll', addedFileItems);
         };
         uploader.onBeforeUploadItem = function (item) {
+            $scope.selectedWorkspace = 'workspace'
+            let internalPath = encodeURIComponent($scope.pathToImportIn);
+            item.url = $scope.TRANSPORT_PROJECT_URL + "/" + $scope.selectedWorkspace + "/" + $scope.projectName + "/" + internalPath;
+            $scope.uploader.url = item.url;
             console.info('onBeforeUploadItem', item);
+            console.log("UPLOADER", $scope.uploader)
         };
         uploader.onProgressItem = function (fileItem, progress) {
             console.info('onProgressItem', fileItem, progress);
