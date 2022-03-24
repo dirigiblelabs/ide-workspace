@@ -767,11 +767,8 @@ WorkspaceTreeAdapter.prototype.unpublish = function (resource) {
 };
 WorkspaceTreeAdapter.prototype.exportProject = function (resource) {
     if (resource.type === 'project' || resource.type == 'folder') {
-        console.log(resource);
         let segments = resource.path.split('/');
-        console.log("1st 2", segments.slice(0, 3).join("/"))
         let callExportPath = segments.slice(0, 3).join("/") + '/' + encodeURIComponent(segments.slice(3).join("/"));
-        console.log(callExportPath)
         return this.exportService.exportProject(callExportPath);
     }
 };
@@ -802,16 +799,12 @@ WorkspaceTreeAdapter.prototype.uploadFileInPlace = function (resource, scope) {
 
 WorkspaceTreeAdapter.prototype.uploadZipToFolder = function (resource, scope) {
     let segments = resource.path.split('/');
-    console.log("SEGMENTS", segments)
-    console.log("RESOURCE", resource)
-
     this.workspaceController.projectName = segments[2];
-    let relativePath = '';
+    let relativePath = '/';
     if (resource.type == "folder") {
         relativePath = this.removeKnownRoot([resource], "/" + this.workspaceController.selectedWorkspace + "/" + this.workspaceController.projectName)[0].norootpath;
     }
-    // scope.$apply();
-    this.workspaceController.showImportFromZipDialog(this.workspaceController.projectName, relativePath);
+    this.workspaceController.showImportFromZipDialog(this.workspaceController.selectedWorkspace, this.workspaceController.projectName, relativePath);
 };
 
 let TemplatesService = function ($http, $window, TEMPLATES_SVC_URL) {
@@ -1259,7 +1252,6 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
                             "action": function (data) {
                                 let tree = $.jstree.reference(data.reference);
                                 let node = tree.get_node(data.reference);
-                                console.log("NODE SELECTED", node)
                                 tree.element.trigger('jstree.workspace.uploadZipToFolder', [node.original._file]);
                             }.bind(this)
                         };
@@ -1363,7 +1355,7 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
 
         // FILE UPLOADER
         $scope.uploader = uploader = new FileUploader({
-            url: $scope.TRANSPORT_PROJECT_URL,
+            url: $scope.TRANSPORT_ZIPTOFOLDER_URL,
             removeAfterUpload: true
         });
 
@@ -1378,43 +1370,42 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
         // UPLOADER CALLBACKS
 
         uploader.onWhenAddingFileFailed = function (item /*{File|FileLikeObject}*/, filter, options) {
-            console.info('onWhenAddingFileFailed', item, filter, options);
+            // console.info('onWhenAddingFileFailed', item, filter, options);
         };
         uploader.onAfterAddingFile = function (fileItem) {
 
-
         };
         uploader.onAfterAddingAll = function (addedFileItems) {
-            console.info('onAfterAddingAll', addedFileItems);
+            // console.info('onAfterAddingAll', addedFileItems);
         };
         uploader.onBeforeUploadItem = function (item) {
-            $scope.selectedWorkspace = 'workspace'
-            let internalPath = encodeURIComponent($scope.pathToImportIn);
-            item.url = $scope.TRANSPORT_ZIPTOFOLDER_URL + "/" + $scope.selectedWorkspace + "/" + $scope.projectName + "/" + internalPath;
+            let internalPath = $scope.pathToImportIn;
+            let pathSegments = [$scope.selectedWorkspace, $scope.projectName, encodeURIComponent(internalPath)];
+            let buildPath = new UriBuilder();
+            buildPath.path(pathSegments)
+            item.url = $scope.TRANSPORT_ZIPTOFOLDER_URL + buildPath.build();
             $scope.uploader.url = item.url;
-            console.info('onBeforeUploadItem', item);
-            console.log("UPLOADER", $scope.uploader)
         };
         uploader.onProgressItem = function (fileItem, progress) {
-            console.info('onProgressItem', fileItem, progress);
+            // console.info('onProgressItem', fileItem, progress);
         };
         uploader.onProgressAll = function (progress) {
-            console.info('onProgressAll', progress);
+            // console.info('onProgressAll', progress);
         };
         uploader.onSuccessItem = function (fileItem, response, status, headers) {
-            console.info('onSuccessItem', fileItem, response, status, headers);
+            // console.info('onSuccessItem', fileItem, response, status, headers);
         };
         uploader.onErrorItem = function (fileItem, response, status, headers) {
-            console.info('onErrorItem', fileItem, response, status, headers);
+            // console.info('onErrorItem', fileItem, response, status, headers);
         };
         uploader.onCancelItem = function (fileItem, response, status, headers) {
-            console.info('onCancelItem', fileItem, response, status, headers);
+            // console.info('onCancelItem', fileItem, response, status, headers);
         };
         uploader.onCompleteItem = function (fileItem, response, status, headers) {
-            console.info('onCompleteItem', fileItem, response, status, headers);
+            // console.info('onCompleteItem', fileItem, response, status, headers);
         };
         uploader.onCompleteAll = function () {
-            console.log('COMPLETE UPLOAD');
+            // console.log('COMPLETE UPLOAD');
             this.clearQueue();
             $('#uploadZipToFolder').click();
             $('#refreshButton').click();
@@ -1447,7 +1438,8 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
             $('#resolveConflicts').click();
         }
 
-        this.showImportFromZipDialog = function (project, pathToImportIn) {
+        this.showImportFromZipDialog = function (workspace, project, pathToImportIn) {
+            $scope.selectedWorkspace = workspace;
             $scope.projectName = project;
             $scope.pathToImportIn = pathToImportIn;
             $scope.$apply(); // Because of JQuery and the bootstrap modal
