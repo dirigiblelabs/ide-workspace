@@ -1067,7 +1067,9 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
                         ctxmenu.create = _ctxmenu.create;
                         delete ctxmenu.create.action;
                         ctxmenu.create.label = "New";
-                        ctxmenu.create.submenu = {
+                        console.log(node.children)
+
+                        let new_submenu = {
                             /*Folder*/
                             "create_folder": {
                                 "label": "Folder",
@@ -1097,6 +1099,34 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
                                 }.bind(self, this)
                             }
                         };
+                        let node_child_files = JSON.parse(JSON.stringify(node)).original._file.files.map(x => x.name);
+                        if (!node_child_files.includes('.xsaccess'))
+                            new_submenu = {
+                                ...new_submenu,
+                                /*XSACCESS*/
+                                "create_xsaccess": {
+                                    "separator_after": true,
+                                    "label": "Application-access file (.xsaccess)",
+                                    "action": function (tree, data) {
+                                        console.log('TREE before create', tree);
+                                        let parentNode = tree.get_node(data.reference);
+                                        let fileNode = {
+                                            text: ".xsaccess",
+                                            type: 'file',
+                                            data: "{}"
+                                        };
+                                        tree.create_node(parentNode, fileNode, "last", function (new_node) {
+                                            console.log('TREE after create', tree)
+                                            setTimeout(function () {
+                                                tree.edit(new_node)
+                                                setTimeout(function () { tree.select_node(new_node); }, 0);
+                                            }, 0);
+                                        });
+                                    }.bind(self, this)
+                                }
+                            };
+
+                        ctxmenu.create.submenu = new_submenu;
                     }
 
                     if (ctxmenu.create) {
