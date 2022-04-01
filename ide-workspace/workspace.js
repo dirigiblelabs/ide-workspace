@@ -977,7 +977,12 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
              * will create Open (singular eidtor) or Open with... choice dropdown for multiple editors.
              */
             this.createOpenFileMenuItem = function (ctxmenu, node) {
-                let contentType = node.original._file.contentType || "";
+                let contentType = '';
+                if (node.original._file.name == '.xsaccess') {
+                    contentType = 'application/json+xsaccess';
+                } else {
+                    contentType = node.original._file.contentType || "";
+                }
                 let editors = getEditorsForContentType(contentType);
                 if (!editors) editors = [{ id: Editors.defaultEditorId }];
                 if (editors.length > 1) {
@@ -1067,7 +1072,6 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
                         ctxmenu.create = _ctxmenu.create;
                         delete ctxmenu.create.action;
                         ctxmenu.create.label = "New";
-                        console.log(node.children)
 
                         let new_submenu = {
                             /*Folder*/
@@ -1080,7 +1084,10 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
                                         type: 'folder'
                                     };
                                     tree.create_node(parentNode, folderNode, "last", function (new_node) {
-                                        tree.edit(new_node);
+                                        setTimeout(function () {
+                                            tree.edit(new_node);
+                                            setTimeout(function () { tree.select_node(new_node); }, 0);
+                                        }, 0);
                                     });
                                 }
                             },
@@ -1094,38 +1101,14 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
                                         type: 'file'
                                     };
                                     tree.create_node(parentNode, fileNode, "last", function (new_node) {
-                                        tree.edit(new_node);
+                                        setTimeout(function () {
+                                            tree.edit(new_node);
+                                            setTimeout(function () { tree.select_node(new_node); }, 0);
+                                        }, 0);
                                     });
                                 }.bind(self, this)
                             }
                         };
-                        let node_child_files = JSON.parse(JSON.stringify(node)).original._file.files.map(x => x.name);
-                        if (!node_child_files.includes('.xsaccess'))
-                            new_submenu = {
-                                ...new_submenu,
-                                /*XSACCESS*/
-                                "create_xsaccess": {
-                                    "separator_after": true,
-                                    "label": "Application-access file (.xsaccess)",
-                                    "action": function (tree, data) {
-                                        console.log('TREE before create', tree);
-                                        let parentNode = tree.get_node(data.reference);
-                                        let fileNode = {
-                                            text: ".xsaccess",
-                                            type: 'file',
-                                            data: "{}"
-                                        };
-                                        tree.create_node(parentNode, fileNode, "last", function (new_node) {
-                                            console.log('TREE after create', tree)
-                                            setTimeout(function () {
-                                                tree.edit(new_node)
-                                                setTimeout(function () { tree.select_node(new_node); }, 0);
-                                            }, 0);
-                                        });
-                                    }.bind(self, this)
-                                }
-                            };
-
                         ctxmenu.create.submenu = new_submenu;
                     }
 
@@ -1144,28 +1127,36 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
                                     fileNode.text = 'file.' + fileTemplate.extension;
                                     fileNode.data = fileTemplate.data;
                                     tree.create_node(parentNode, fileNode, "last", function (new_node) {
-                                        tree.edit(new_node);
+                                        setTimeout(function () {
+                                            tree.edit(new_node)
+                                            setTimeout(function () { tree.select_node(new_node); }, 0);
+                                        }, 0);
                                     });
                                 }.bind(self, this)
                             };
                         }
 
                         specificFileTemplates.forEach(function (fileTemplate) {
-                            ctxmenu.create.submenu[fileTemplate.name] = {
-                                "label": fileTemplate.label,
-                                "action": function (wnd, data) {
-                                    let tree = $.jstree.reference(data.reference);
-                                    let parentNode = tree.get_node(data.reference);
-                                    let fileNode = {
-                                        type: 'file'
-                                    };
-                                    fileNode.text = 'file.' + fileTemplate.extension;
-                                    fileNode.data = fileTemplate.data;
-                                    tree.create_node(parentNode, fileNode, "last", function (new_node) {
-                                        tree.edit(new_node);
-                                    });
-                                }.bind(self, this)
-                            };
+                            let node_child_files = JSON.parse(JSON.stringify(node)).original._file.files.map(x => x.name);
+                            if (fileTemplate.name != 'xsaccess' || !node_child_files.includes('.xsaccess'))
+                                ctxmenu.create.submenu[fileTemplate.name] = {
+                                    "label": fileTemplate.label,
+                                    "action": function (wnd, data) {
+                                        let tree = $.jstree.reference(data.reference);
+                                        let parentNode = tree.get_node(data.reference);
+                                        let fileNode = {
+                                            type: 'file'
+                                        };
+                                        fileNode.text = (fileTemplate.extension != 'xsaccess' ? 'file.' : '.') + fileTemplate.extension;
+                                        fileNode.data = fileTemplate.data;
+                                        tree.create_node(parentNode, fileNode, "last", function (new_node) {
+                                            setTimeout(function () {
+                                                tree.edit(new_node)
+                                                setTimeout(function () { tree.select_node(new_node); }, 0);
+                                            }, 0);
+                                        });
+                                    }.bind(self, this)
+                                };
                         });
                     }
 
@@ -1398,16 +1389,6 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
         });
 
         // UPLOADER CALLBACKS
-
-        uploader.onWhenAddingFileFailed = function (item /*{File|FileLikeObject}*/, filter, options) {
-            // console.info('onWhenAddingFileFailed', item, filter, options);
-        };
-        uploader.onAfterAddingFile = function (fileItem) {
-
-        };
-        uploader.onAfterAddingAll = function (addedFileItems) {
-            // console.info('onAfterAddingAll', addedFileItems);
-        };
         uploader.onBeforeUploadItem = function (item) {
             let internalPath = $scope.pathToImportIn;
             let pathSegments = [$scope.selectedWorkspace, $scope.projectName, encodeURIComponent(internalPath)];
@@ -1416,26 +1397,8 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
             item.url = $scope.TRANSPORT_ZIPTOFOLDER_URL + buildPath.build();
             $scope.uploader.url = item.url;
         };
-        uploader.onProgressItem = function (fileItem, progress) {
-            // console.info('onProgressItem', fileItem, progress);
-        };
-        uploader.onProgressAll = function (progress) {
-            // console.info('onProgressAll', progress);
-        };
-        uploader.onSuccessItem = function (fileItem, response, status, headers) {
-            // console.info('onSuccessItem', fileItem, response, status, headers);
-        };
-        uploader.onErrorItem = function (fileItem, response, status, headers) {
-            // console.info('onErrorItem', fileItem, response, status, headers);
-        };
-        uploader.onCancelItem = function (fileItem, response, status, headers) {
-            // console.info('onCancelItem', fileItem, response, status, headers);
-        };
-        uploader.onCompleteItem = function (fileItem, response, status, headers) {
-            // console.info('onCompleteItem', fileItem, response, status, headers);
-        };
+
         uploader.onCompleteAll = function () {
-            // console.log('COMPLETE UPLOAD');
             this.clearQueue();
             $('#uploadZipToFolder').click();
             $('#refreshButton').click();
@@ -1725,7 +1688,7 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
     }]);
 
 const images = ['png', 'jpg', 'jpeg', 'gif'];
-const models = ['extension', 'extensionpoint', 'edm', 'model', 'dsm', 'schema', 'bpmn', 'job', 'xsjob', 'listener', 'websocket', 'roles', 'constraints', 'table', 'view'];
+const models = ['extension', 'extensionpoint', 'edm', 'model', 'dsm', 'schema', 'bpmn', 'job', 'xsjob', 'xsaccess', 'listener', 'websocket', 'roles', 'constraints', 'table', 'view'];
 
 function getIcon(f) {
     let icon;
