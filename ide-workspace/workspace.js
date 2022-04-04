@@ -1117,7 +1117,6 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
                                     fileNode.data = fileTemplate.data;
                                     tree.create_node(parentNode, fileNode, "last", function (new_node) {
                                         tree.edit(new_node)
-                                        tree.select_node(new_node);
                                     });
                                 }.bind(self, this)
                             };
@@ -1138,7 +1137,6 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
                                         fileNode.data = fileTemplate.data;
                                         tree.create_node(parentNode, fileNode, "last", function (new_node) {
                                             tree.edit(new_node)
-                                            tree.select_node(new_node);
                                         });
                                     }.bind(self, this)
                                 };
