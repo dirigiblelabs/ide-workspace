@@ -977,12 +977,7 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
              * will create Open (singular eidtor) or Open with... choice dropdown for multiple editors.
              */
             this.createOpenFileMenuItem = function (ctxmenu, node) {
-                let contentType = '';
-                if (node.original._file.name == '.xsaccess') {
-                    contentType = 'application/json+xsaccess';
-                } else {
-                    contentType = node.original._file.contentType || "";
-                }
+                let contentType = node.original._file.contentType || "";
                 let editors = getEditorsForContentType(contentType);
                 if (!editors) editors = [{ id: Editors.defaultEditorId }];
                 if (editors.length > 1) {
