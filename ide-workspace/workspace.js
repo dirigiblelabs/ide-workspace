@@ -1136,7 +1136,10 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
                                         fileNode.text = (fileTemplate.extension != 'xsaccess' ? 'file.' : '.') + fileTemplate.extension;
                                         fileNode.data = fileTemplate.data;
                                         tree.create_node(parentNode, fileNode, "last", function (new_node) {
-                                            tree.edit(new_node)
+                                            console.log("NEW", new_node)
+                                            if (new_node.text != '.xsaccess') {
+                                                tree.edit(new_node);
+                                            }
                                         });
                                     }.bind(self, this)
                                 };
