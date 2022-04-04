@@ -157,7 +157,7 @@ WorkspaceService.prototype.createFolder = function (type) {
         text: this.newFileName('folder', 'folder')
     };
     inst.create_node(obj, node_tmpl, "last", function (new_node) {
-        setTimeout(function () { inst.edit(new_node); }, 0);
+        inst.edit(new_node);
     });
 };
 
@@ -1084,10 +1084,7 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
                                         type: 'folder'
                                     };
                                     tree.create_node(parentNode, folderNode, "last", function (new_node) {
-                                        setTimeout(function () {
-                                            tree.edit(new_node);
-                                            setTimeout(function () { tree.select_node(new_node); }, 0);
-                                        }, 0);
+                                        tree.edit(new_node);
                                     });
                                 }
                             },
@@ -1101,10 +1098,7 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
                                         type: 'file'
                                     };
                                     tree.create_node(parentNode, fileNode, "last", function (new_node) {
-                                        setTimeout(function () {
-                                            tree.edit(new_node);
-                                            setTimeout(function () { tree.select_node(new_node); }, 0);
-                                        }, 0);
+                                        tree.edit(new_node);
                                     });
                                 }.bind(self, this)
                             }
@@ -1127,10 +1121,8 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
                                     fileNode.text = 'file.' + fileTemplate.extension;
                                     fileNode.data = fileTemplate.data;
                                     tree.create_node(parentNode, fileNode, "last", function (new_node) {
-                                        setTimeout(function () {
-                                            tree.edit(new_node)
-                                            setTimeout(function () { tree.select_node(new_node); }, 0);
-                                        }, 0);
+                                        tree.edit(new_node)
+                                        tree.select_node(new_node);
                                     });
                                 }.bind(self, this)
                             };
@@ -1150,10 +1142,8 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
                                         fileNode.text = (fileTemplate.extension != 'xsaccess' ? 'file.' : '.') + fileTemplate.extension;
                                         fileNode.data = fileTemplate.data;
                                         tree.create_node(parentNode, fileNode, "last", function (new_node) {
-                                            setTimeout(function () {
-                                                tree.edit(new_node)
-                                                setTimeout(function () { tree.select_node(new_node); }, 0);
-                                            }, 0);
+                                            tree.edit(new_node)
+                                            tree.select_node(new_node);
                                         });
                                     }.bind(self, this)
                                 };
