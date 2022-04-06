@@ -1122,27 +1122,42 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
                             };
                         }
 
-                        specificFileTemplates.forEach(function (fileTemplate) {
-                            let node_child_files = JSON.parse(JSON.stringify(node)).original._file.files.map(x => x.name);
-                            if (fileTemplate.name != 'xsaccess' || !node_child_files.includes('.xsaccess'))
-                                ctxmenu.create.submenu[fileTemplate.name] = {
-                                    "label": fileTemplate.label,
-                                    "action": function (wnd, data) {
-                                        let tree = $.jstree.reference(data.reference);
-                                        let parentNode = tree.get_node(data.reference);
-                                        let fileNode = {
-                                            type: 'file'
-                                        };
-                                        fileNode.text = (fileTemplate.extension != 'xsaccess' ? 'file.' : '.') + fileTemplate.extension;
-                                        fileNode.data = fileTemplate.data;
-                                        tree.create_node(parentNode, fileNode, "last", function (new_node) {
-                                            if (new_node.text != '.xsaccess') {
-                                                tree.edit(new_node);
-                                            }
-                                        });
-                                    }.bind(self, this)
-                                };
-                        });
+                        let nodeChildren = node.original._file.files.map(x => x.name);
+
+                        for (let i = 0; i < specificFileTemplates.length; i++) {
+                            let fileTemplate = specificFileTemplates[i];
+                            let isDisabled = false;
+                            if (fileTemplate.oncePerFolder) {
+                                for (let nc = 0; nc < nodeChildren.length; nc++) {
+                                    if (fileTemplate.nameless) {
+                                        if (nodeChildren[nc] === `.${fileTemplate.extension}`) {
+                                            isDisabled = true;
+                                            break;
+                                        }
+                                    } else if (nodeChildren[nc].endsWith(`.${fileTemplate.extension}`)) {
+                                        isDisabled = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            ctxmenu.create.submenu[fileTemplate.name] = {
+                                "_disabled": isDisabled,
+                                "label": fileTemplate.label,
+                                "action": function (wnd, data) {
+                                    let tree = $.jstree.reference(data.reference);
+                                    let parentNode = tree.get_node(data.reference);
+                                    let fileNode = {
+                                        type: 'file',
+                                        data: fileTemplate.data
+                                    };
+                                    if (fileTemplate.nameless) fileNode.text = `.${fileTemplate.extension}`;
+                                    else fileNode.text = `file.${fileTemplate.extension}`;
+                                    tree.create_node(parentNode, fileNode, "last", function (new_node) {
+                                        tree.edit(new_node);
+                                    });
+                                }.bind(self, this)
+                            };
+                        }
                     }
 
                     /*Copy*/
