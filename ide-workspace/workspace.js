@@ -995,7 +995,7 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
 
         return openMenuItemFactory;
     }])
-    .factory('$treeConfig', ['$treeConfig.openmenuitem', function (openmenuitem) {
+    .factory('$treeConfig', ['$treeConfig.openmenuitem', '$http', function (openmenuitem, $http) {
 
         // get the new by template extensions
         let templates = $.ajax({
@@ -1015,6 +1015,7 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
 
         let priorityFileTemplates = JSON.parse(templates).filter(e => e.order !== undefined).sort((a, b) => a.order - b.order);
         let specificFileTemplates = JSON.parse(templates).filter(e => e.order === undefined);
+        let post_no_edit_URL = '/services/v4/ide/workspaces/';
 
         return {
             'core': {
@@ -1116,7 +1117,7 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
                                     fileNode.text = 'file.' + fileTemplate.extension;
                                     fileNode.data = fileTemplate.data;
                                     tree.create_node(parentNode, fileNode, "last", function (new_node) {
-                                        tree.edit(new_node)
+                                        tree.edit(new_node);
                                     });
                                 }.bind(self, this)
                             };
@@ -1152,9 +1153,21 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
                                     };
                                     if (fileTemplate.nameless) fileNode.text = `.${fileTemplate.extension}`;
                                     else fileNode.text = `file.${fileTemplate.extension}`;
-                                    tree.create_node(parentNode, fileNode, "last", function (new_node) {
-                                        tree.edit(new_node);
-                                    });
+                                    if (!fileTemplate.editOnCreate) {
+                                        let url = new UriBuilder().path(post_no_edit_URL.split('/')).path(parentNode.original._file.path.split('/')).path(fileNode.text).build();
+                                        $http.post(url, fileNode.data, {
+                                            headers: {
+                                                "Content-Type": "text/plain;charset=UTF-8"
+                                            }
+                                        })
+                                            .then(function (response) {
+                                                $('#refreshButton').click();
+                                            });
+                                    } else {
+                                        tree.create_node(parentNode, fileNode, "last", function (new_node) {
+                                            tree.edit(new_node, fileNode.text);
+                                        });
+                                    }
                                 }.bind(self, this)
                             };
                         }
@@ -1690,7 +1703,7 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
     }]);
 
 const images = ['png', 'jpg', 'jpeg', 'gif'];
-const models = ['extension', 'extensionpoint', 'edm', 'model', 'dsm', 'schema', 'bpmn', 'job', 'xsjob', 'xsaccess', 'listener', 'websocket', 'roles', 'constraints', 'table', 'view'];
+const models = ['extension', 'extensionpoint', 'edm', 'model', 'dsm', 'schema', 'bpmn', 'job', 'listener', 'websocket', 'roles', 'constraints', 'table', 'view'];
 
 function getIcon(f) {
     let icon;
