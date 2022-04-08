@@ -73,6 +73,8 @@ angular
 		uploader.filters.push({
 			name: 'customFilter',
 			fn: function (item /*{File|FileLikeObject}*/, options) {
+				let type = item.type.slice(item.type.lastIndexOf('/') + 1);
+				if (type != 'zip' && type != 'x-zip') return false;
 				return this.queue.length < 100;
 			}
 		});

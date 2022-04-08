@@ -157,7 +157,7 @@ WorkspaceService.prototype.createFolder = function (type) {
         text: this.newFileName('folder', 'folder')
     };
     inst.create_node(obj, node_tmpl, "last", function (new_node) {
-        setTimeout(function () { inst.edit(new_node); }, 0);
+        inst.edit(new_node);
     });
 };
 
@@ -995,7 +995,7 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
 
         return openMenuItemFactory;
     }])
-    .factory('$treeConfig', ['$treeConfig.openmenuitem', function (openmenuitem) {
+    .factory('$treeConfig', ['$treeConfig.openmenuitem', '$http', function (openmenuitem, $http) {
 
         // get the new by template extensions
         let templates = $.ajax({
@@ -1015,6 +1015,7 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
 
         let priorityFileTemplates = JSON.parse(templates).filter(e => e.order !== undefined).sort((a, b) => a.order - b.order);
         let specificFileTemplates = JSON.parse(templates).filter(e => e.order === undefined);
+        let post_no_edit_URL = '/services/v4/ide/workspaces/';
 
         return {
             'core': {
@@ -1067,7 +1068,8 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
                         ctxmenu.create = _ctxmenu.create;
                         delete ctxmenu.create.action;
                         ctxmenu.create.label = "New";
-                        ctxmenu.create.submenu = {
+
+                        let new_submenu = {
                             /*Folder*/
                             "create_folder": {
                                 "label": "Folder",
@@ -1097,6 +1099,7 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
                                 }.bind(self, this)
                             }
                         };
+                        ctxmenu.create.submenu = new_submenu;
                     }
 
                     if (ctxmenu.create) {
@@ -1120,23 +1123,54 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
                             };
                         }
 
-                        specificFileTemplates.forEach(function (fileTemplate) {
+                        let nodeChildren = node.original._file.files.map(x => x.name);
+
+                        for (let i = 0; i < specificFileTemplates.length; i++) {
+                            let fileTemplate = specificFileTemplates[i];
+                            let isDisabled = false;
+                            if (fileTemplate.oncePerFolder) {
+                                for (let nc = 0; nc < nodeChildren.length; nc++) {
+                                    if (fileTemplate.nameless) {
+                                        if (nodeChildren[nc] === `.${fileTemplate.extension}`) {
+                                            isDisabled = true;
+                                            break;
+                                        }
+                                    } else if (nodeChildren[nc].endsWith(`.${fileTemplate.extension}`)) {
+                                        isDisabled = true;
+                                        break;
+                                    }
+                                }
+                            }
                             ctxmenu.create.submenu[fileTemplate.name] = {
+                                "_disabled": isDisabled,
                                 "label": fileTemplate.label,
                                 "action": function (wnd, data) {
                                     let tree = $.jstree.reference(data.reference);
                                     let parentNode = tree.get_node(data.reference);
                                     let fileNode = {
-                                        type: 'file'
+                                        type: 'file',
+                                        data: fileTemplate.data
                                     };
-                                    fileNode.text = 'file.' + fileTemplate.extension;
-                                    fileNode.data = fileTemplate.data;
-                                    tree.create_node(parentNode, fileNode, "last", function (new_node) {
-                                        tree.edit(new_node);
-                                    });
+                                    if (fileTemplate.nameless) fileNode.text = `.${fileTemplate.extension}`;
+                                    else fileNode.text = `file.${fileTemplate.extension}`;
+                                    if (!fileTemplate.editOnCreate) {
+                                        let url = new UriBuilder().path(post_no_edit_URL.split('/')).path(parentNode.original._file.path.split('/')).path(fileNode.text).build();
+                                        $http.post(url, fileNode.data, {
+                                            headers: {
+                                                "Content-Type": "text/plain;charset=UTF-8"
+                                            }
+                                        })
+                                            .then(function (response) {
+                                                $('#refreshButton').click();
+                                            });
+                                    } else {
+                                        tree.create_node(parentNode, fileNode, "last", function (new_node) {
+                                            tree.edit(new_node, fileNode.text);
+                                        });
+                                    }
                                 }.bind(self, this)
                             };
-                        });
+                        }
                     }
 
                     /*Copy*/
@@ -1363,21 +1397,13 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
         uploader.filters.push({
             name: 'customFilter',
             fn: function (item /*{File|FileLikeObject}*/, options) {
+                let type = item.type.slice(item.type.lastIndexOf('/') + 1);
+                if (type != 'zip' && type != 'x-zip') return false;
                 return this.queue.length < 100;
             }
         });
 
         // UPLOADER CALLBACKS
-
-        uploader.onWhenAddingFileFailed = function (item /*{File|FileLikeObject}*/, filter, options) {
-            // console.info('onWhenAddingFileFailed', item, filter, options);
-        };
-        uploader.onAfterAddingFile = function (fileItem) {
-
-        };
-        uploader.onAfterAddingAll = function (addedFileItems) {
-            // console.info('onAfterAddingAll', addedFileItems);
-        };
         uploader.onBeforeUploadItem = function (item) {
             let internalPath = $scope.pathToImportIn;
             let pathSegments = [$scope.selectedWorkspace, $scope.projectName, encodeURIComponent(internalPath)];
@@ -1386,26 +1412,8 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
             item.url = $scope.TRANSPORT_ZIPTOFOLDER_URL + buildPath.build();
             $scope.uploader.url = item.url;
         };
-        uploader.onProgressItem = function (fileItem, progress) {
-            // console.info('onProgressItem', fileItem, progress);
-        };
-        uploader.onProgressAll = function (progress) {
-            // console.info('onProgressAll', progress);
-        };
-        uploader.onSuccessItem = function (fileItem, response, status, headers) {
-            // console.info('onSuccessItem', fileItem, response, status, headers);
-        };
-        uploader.onErrorItem = function (fileItem, response, status, headers) {
-            // console.info('onErrorItem', fileItem, response, status, headers);
-        };
-        uploader.onCancelItem = function (fileItem, response, status, headers) {
-            // console.info('onCancelItem', fileItem, response, status, headers);
-        };
-        uploader.onCompleteItem = function (fileItem, response, status, headers) {
-            // console.info('onCompleteItem', fileItem, response, status, headers);
-        };
+
         uploader.onCompleteAll = function () {
-            // console.log('COMPLETE UPLOAD');
             this.clearQueue();
             $('#uploadZipToFolder').click();
             $('#refreshButton').click();
@@ -1695,7 +1703,7 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
     }]);
 
 const images = ['png', 'jpg', 'jpeg', 'gif'];
-const models = ['extension', 'extensionpoint', 'edm', 'model', 'dsm', 'schema', 'bpmn', 'job', 'xsjob', 'listener', 'websocket', 'roles', 'constraints', 'table', 'view'];
+const models = ['extension', 'extensionpoint', 'edm', 'model', 'dsm', 'schema', 'bpmn', 'job', 'listener', 'websocket', 'roles', 'constraints', 'table', 'view'];
 
 function getIcon(f) {
     let icon;
