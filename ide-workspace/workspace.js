@@ -1017,6 +1017,14 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
         let specificFileTemplates = JSON.parse(templates).filter(e => e.order === undefined);
         let post_no_edit_URL = '/services/v4/ide/workspaces/';
 
+        for (let i = 0; i < priorityFileTemplates.length; i++) {
+            if (priorityFileTemplates[i].isModel) models.push(priorityFileTemplates[i].extension);
+        }
+
+        for (let i = 0; i < specificFileTemplates.length; i++) {
+            if (specificFileTemplates[i].isModel) models.push(specificFileTemplates[i].extension);
+        }
+
         return {
             'core': {
                 'themes': {
@@ -1103,27 +1111,54 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
                     }
 
                     if (ctxmenu.create) {
+                        let nodeChildren = node.original._file.files.map(x => x.name);
+
                         for (let i = 0; i < priorityFileTemplates.length; i++) {
                             let fileTemplate = priorityFileTemplates[i];
+                            let isDisabled = false;
+                            if (fileTemplate.oncePerFolder) {
+                                for (let nc = 0; nc < nodeChildren.length; nc++) {
+                                    if (fileTemplate.nameless) {
+                                        if (nodeChildren[nc] === `.${fileTemplate.extension}`) {
+                                            isDisabled = true;
+                                            break;
+                                        }
+                                    } else if (nodeChildren[nc].endsWith(`.${fileTemplate.extension}`)) {
+                                        isDisabled = true;
+                                        break;
+                                    }
+                                }
+                            }
                             ctxmenu.create.submenu[fileTemplate.name] = {
+                                "_disabled": isDisabled,
                                 "separator_after": (i + 1 === priorityFileTemplates.length),
                                 "label": fileTemplate.label,
                                 "action": function (wnd, data) {
                                     let tree = $.jstree.reference(data.reference);
                                     let parentNode = tree.get_node(data.reference);
                                     let fileNode = {
-                                        type: 'file'
+                                        type: 'file',
+                                        data: fileTemplate.data,
                                     };
-                                    fileNode.text = 'file.' + fileTemplate.extension;
-                                    fileNode.data = fileTemplate.data;
-                                    tree.create_node(parentNode, fileNode, "last", function (new_node) {
-                                        tree.edit(new_node);
-                                    });
+                                    if (fileTemplate.nameless) fileNode.text = `.${fileTemplate.extension}`;
+                                    else fileNode.text = `file.${fileTemplate.extension}`;
+                                    if (fileTemplate.staticName) {
+                                        let url = new UriBuilder().path(post_no_edit_URL.split('/')).path(parentNode.original._file.path.split('/')).path(fileNode.text).build();
+                                        $http.post(url, fileNode.data, {
+                                            headers: {
+                                                "Content-Type": "text/plain;charset=UTF-8"
+                                            }
+                                        }).then(function (response) {
+                                            $('#refreshButton').click();
+                                        });
+                                    } else {
+                                        tree.create_node(parentNode, fileNode, "last", function (new_node) {
+                                            tree.edit(new_node);
+                                        });
+                                    }
                                 }.bind(self, this)
                             };
                         }
-
-                        let nodeChildren = node.original._file.files.map(x => x.name);
 
                         for (let i = 0; i < specificFileTemplates.length; i++) {
                             let fileTemplate = specificFileTemplates[i];
@@ -1153,16 +1188,15 @@ angular.module('workspace', ['workspace.config', 'ideUiCore', 'ngAnimate', 'ngSa
                                     };
                                     if (fileTemplate.nameless) fileNode.text = `.${fileTemplate.extension}`;
                                     else fileNode.text = `file.${fileTemplate.extension}`;
-                                    if (!fileTemplate.editOnCreate) {
+                                    if (fileTemplate.staticName) {
                                         let url = new UriBuilder().path(post_no_edit_URL.split('/')).path(parentNode.original._file.path.split('/')).path(fileNode.text).build();
                                         $http.post(url, fileNode.data, {
                                             headers: {
                                                 "Content-Type": "text/plain;charset=UTF-8"
                                             }
-                                        })
-                                            .then(function (response) {
-                                                $('#refreshButton').click();
-                                            });
+                                        }).then(function (response) {
+                                            $('#refreshButton').click();
+                                        });
                                     } else {
                                         tree.create_node(parentNode, fileNode, "last", function (new_node) {
                                             tree.edit(new_node, fileNode.text);
