@@ -9,6 +9,9 @@
  * SPDX-FileCopyrightText: 2021 SAP SE or an SAP affiliate company and Eclipse Dirigible contributors
  * SPDX-License-Identifier: EPL-2.0
  */
+
+// Deprecated, do not edit.
+
 let extensions = require('core/v4/extensions');
 let response = require('http/v4/response');
 
